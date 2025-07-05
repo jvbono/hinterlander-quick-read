@@ -1,0 +1,18 @@
+
+export interface NewsItem {
+  id: string;
+  title: string;
+  summary: string;
+  source: string;
+  publishedAt: Date;
+  category: 'National' | 'Provincial' | 'Opinion' | 'Rural';
+  url: string;
+  imageUrl?: string;
+}
+
+export interface NewsSource {
+  name: string;
+  type: 'mainstream' | 'independent' | 'blog' | 'podcast';
+  rssUrl: string;
+  tags: string[];
+}

@@ -3,28 +3,44 @@ import { useState, useMemo } from 'react';
 import Header from '../components/Header';
 import NewsCard from '../components/NewsCard';
 import CategoryFilter from '../components/CategoryFilter';
-import { mockNewsData } from '../data/mockNews';
-import { NewsItem } from '../types/news';
+import { useNews } from '../hooks/useNews';
+import { Skeleton } from '../components/ui/skeleton';
 
 const Index = () => {
   const [activeCategory, setActiveCategory] = useState('All');
   
   const categories = ['All', 'National', 'Provincial', 'Opinion', 'Rural'];
   
-  const filteredNews = useMemo(() => {
-    if (activeCategory === 'All') {
-      return mockNewsData;
-    }
-    return mockNewsData.filter(item => item.category === activeCategory);
-  }, [activeCategory]);
+  const { data: newsData = [], isLoading, error } = useNews(activeCategory);
 
   const categoryStats = useMemo(() => {
-    const stats: Record<string, number> = { All: mockNewsData.length };
+    if (!newsData.length) return { All: 0 };
+    
+    const stats: Record<string, number> = { All: newsData.length };
     categories.slice(1).forEach(category => {
-      stats[category] = mockNewsData.filter(item => item.category === category).length;
+      stats[category] = newsData.filter(item => item.category === category).length;
     });
     return stats;
-  }, []);
+  }, [newsData]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-6">
+          <div className="text-center py-12">
+            <p className="text-red-600 mb-4">Error loading news: {error.message}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="text-primary hover:underline"
+            >
+              Try refreshing the page
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -36,7 +52,11 @@ const Index = () => {
             {activeCategory === 'All' ? 'All Stories' : `${activeCategory} News`}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {filteredNews.length} {filteredNews.length === 1 ? 'story' : 'stories'} available
+            {isLoading ? (
+              'Loading stories...'
+            ) : (
+              `${newsData.length} ${newsData.length === 1 ? 'story' : 'stories'} available`
+            )}
           </p>
         </div>
 
@@ -46,16 +66,32 @@ const Index = () => {
           onCategoryChange={setActiveCategory}
         />
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredNews.map((item) => (
-            <NewsCard key={item.id} item={item} />
-          ))}
-        </div>
-
-        {filteredNews.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No stories found in this category.</p>
+        {isLoading ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="border rounded-lg p-6">
+                <Skeleton className="h-4 w-20 mb-4" />
+                <Skeleton className="h-6 w-full mb-2" />
+                <Skeleton className="h-4 w-full mb-1" />
+                <Skeleton className="h-4 w-3/4 mb-4" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            ))}
           </div>
+        ) : (
+          <>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {newsData.map((item) => (
+                <NewsCard key={item.id} item={item} />
+              ))}
+            </div>
+
+            {newsData.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No stories found in this category.</p>
+              </div>
+            )}
+          </>
         )}
       </main>
       

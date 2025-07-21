@@ -5,13 +5,18 @@ import NewsCard from '../components/NewsCard';
 import CategoryFilter from '../components/CategoryFilter';
 import { useNews } from '../hooks/useNews';
 import { Skeleton } from '../components/ui/skeleton';
+import { Button } from '../components/ui/button';
+import { supabase } from '../integrations/supabase/client';
+import { useToast } from '../hooks/use-toast';
 
 const Index = () => {
   const [activeCategory, setActiveCategory] = useState('All');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { toast } = useToast();
   
   const categories = ['All', 'National', 'Provincial', 'Opinion', 'Rural'];
   
-  const { data: newsData = [], isLoading, error } = useNews(activeCategory);
+  const { data: newsData = [], isLoading, error, refetch } = useNews(activeCategory);
 
   const categoryStats = useMemo(() => {
     if (!newsData.length) return { All: 0 };
@@ -22,6 +27,36 @@ const Index = () => {
     });
     return stats;
   }, [newsData]);
+
+  const handleRefreshNews = async () => {
+    setIsRefreshing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('process-rss-feeds');
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to refresh news feeds",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success", 
+          description: "News feeds refreshed successfully",
+        });
+        // Refetch the news data
+        await refetch();
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to refresh news feeds",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   if (error) {
     return (
@@ -60,11 +95,23 @@ const Index = () => {
           </p>
         </div>
 
-        <CategoryFilter 
-          categories={categories} 
-          activeCategory={activeCategory}
-          onCategoryChange={setActiveCategory}
-        />
+        <div className="mb-6">
+          <CategoryFilter 
+            categories={categories} 
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+          />
+          
+          <div className="mt-4 flex justify-center">
+            <Button 
+              onClick={handleRefreshNews} 
+              disabled={isRefreshing}
+              variant="outline"
+            >
+              {isRefreshing ? 'Refreshing...' : 'Refresh News Feeds'}
+            </Button>
+          </div>
+        </div>
 
         {isLoading ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -88,7 +135,14 @@ const Index = () => {
 
             {newsData.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-muted-foreground">No stories found in this category.</p>
+                <p className="text-muted-foreground mb-4">No stories found in this category.</p>
+                <Button 
+                  onClick={handleRefreshNews} 
+                  disabled={isRefreshing}
+                  variant="default"
+                >
+                  {isRefreshing ? 'Loading News...' : 'Load Latest News'}
+                </Button>
               </div>
             )}
           </>

@@ -1,16 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../integrations/supabase/client';
 import { NewsItem } from '../types/news';
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Supabase environment variables are not configured. Please set up your Supabase integration in Lovable.');
-}
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const useNews = (category?: string) => {
   return useQuery({

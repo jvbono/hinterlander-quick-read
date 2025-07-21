@@ -14,9 +14,10 @@ interface RSSItem {
 interface NewsSource {
   id: string;
   name: string;
-  type: string;
-  rss_url: string;
-  tags: string[];
+  url: string;
+  rss_feed_url: string;
+  category: string;
+  is_active: boolean;
 }
 
 serve(async (req) => {
@@ -46,7 +47,7 @@ serve(async (req) => {
         console.log(`Processing RSS feed: ${source.name}`)
         
         // Fetch RSS feed
-        const response = await fetch(source.rss_url, {
+        const response = await fetch(source.rss_feed_url, {
           headers: {
             'User-Agent': 'Hinterlander RSS Aggregator 1.0'
           }
@@ -65,23 +66,20 @@ serve(async (req) => {
         // Process each RSS item
         for (const item of rssItems) {
           const newsItem = {
-            external_id: item.guid || item.link || `${source.id}-${Date.now()}`,
             title: cleanText(item.title),
             summary: cleanText(item.description),
             source: source.name,
-            source_id: source.id,
             published_at: parseDate(item.pubDate),
             category: categorizeNews(item, source),
             url: item.link,
             image_url: extractImageUrl(item.description)
           }
 
-          // Insert or update news item
+          // Insert news item (skip duplicates by URL)
           const { error: insertError } = await supabaseClient
             .from('news_items')
-            .upsert(newsItem, {
-              onConflict: 'external_id,source_id'
-            })
+            .insert(newsItem)
+            .select()
 
           if (!insertError) {
             totalNew++
@@ -186,25 +184,23 @@ function categorizeNews(item: RSSItem, source: NewsSource): string {
   const text = `${title} ${description}`
 
   // Rural/Agriculture keywords
-  if (source.tags.includes('rural') || source.tags.includes('agriculture') ||
-      /\b(farm|agriculture|rural|crop|livestock|grain|beef|dairy|wheat)\b/.test(text)) {
+  if (/\b(farm|agriculture|rural|crop|livestock|grain|beef|dairy|wheat)\b/.test(text)) {
     return 'Rural'
   }
 
   // Opinion keywords
-  if (source.tags.includes('opinion') || source.name.includes('Line') ||
+  if (source.name.includes('Line') ||
       /\b(opinion|editorial|commentary|analysis|column)\b/.test(text)) {
     return 'Opinion'
   }
 
   // Provincial keywords (check for province names)
-  if (source.tags.some(tag => ['ontario', 'quebec', 'british-columbia', 'alberta', 'manitoba', 'saskatchewan', 'nova-scotia', 'new-brunswick', 'newfoundland', 'prince-edward-island'].includes(tag)) ||
-      /\b(ontario|quebec|british columbia|alberta|manitoba|saskatchewan|nova scotia|new brunswick|newfoundland|prince edward island|toronto|montreal|vancouver|calgary|winnipeg|halifax)\b/.test(text)) {
+  if (/\b(ontario|quebec|british columbia|alberta|manitoba|saskatchewan|nova scotia|new brunswick|newfoundland|prince edward island|toronto|montreal|vancouver|calgary|winnipeg|halifax)\b/.test(text)) {
     return 'Provincial'
   }
 
-  // Default to National
-  return 'National'
+  // Use source's default category
+  return source.category
 }
 
 function extractImageUrl(description: string): string | null {

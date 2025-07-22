@@ -6,7 +6,7 @@ const Header = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Hinterlander</h1>
-            <p className="text-sm text-muted-foreground">Canadian news, clearly organized</p>
+            <p className="text-sm text-muted-foreground">One Page, fewer solitudes.</p>
           </div>
           <div className="text-xs text-muted-foreground">
             Updated {new Date().toLocaleTimeString('en-CA', { 

@@ -84,15 +84,8 @@ const Index = () => {
       <main className="container mx-auto px-4 py-6">
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-2">
-            {activeCategory === 'All' ? 'All Stories' : `${activeCategory} News`}
+            {activeCategory === 'All' ? 'Canadian news, clearly organized' : `${activeCategory} News`}
           </h2>
-          <p className="text-sm text-muted-foreground">
-            {isLoading ? (
-              'Loading stories...'
-            ) : (
-              `${newsData.length} ${newsData.length === 1 ? 'story' : 'stories'} available`
-            )}
-          </p>
         </div>
 
         <div className="mb-6">

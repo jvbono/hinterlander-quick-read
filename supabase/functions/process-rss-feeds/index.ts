@@ -21,6 +21,15 @@ interface NewsSource {
 }
 
 serve(async (req) => {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -41,20 +50,30 @@ serve(async (req) => {
 
     let totalProcessed = 0;
     let totalNew = 0;
+    let successCount = 0;
+    let errorCount = 0;
 
     for (const source of sources as NewsSource[]) {
       try {
         console.log(`Processing RSS feed: ${source.name}`)
         
-        // Fetch RSS feed
+        // Add timeout and better headers
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        
         const response = await fetch(source.rss_feed_url, {
+          signal: controller.signal,
           headers: {
-            'User-Agent': 'Hinterlander RSS Aggregator 1.0'
+            'User-Agent': 'Mozilla/5.0 (compatible; HinterlanderBot/1.0)',
+            'Accept': 'application/rss+xml, application/xml, text/xml'
           }
         })
 
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
-          console.error(`Failed to fetch ${source.name}: ${response.status}`)
+          console.error(`Failed to fetch ${source.name}: ${response.status} ${response.statusText}`)
+          errorCount++
           continue
         }
 
@@ -75,11 +94,13 @@ serve(async (req) => {
             image_url: extractImageUrl(item.description)
           }
 
-          // Insert news item (skip duplicates by URL)
+          // Insert news item with upsert to handle duplicates
           const { error: insertError } = await supabaseClient
             .from('news_items')
-            .insert(newsItem)
-            .select()
+            .upsert(newsItem, { 
+              onConflict: 'url',
+              ignoreDuplicates: true 
+            })
 
           if (!insertError) {
             totalNew++
@@ -87,6 +108,7 @@ serve(async (req) => {
         }
 
         totalProcessed += rssItems.length
+        successCount++
 
         // Update last fetched timestamp
         await supabaseClient
@@ -95,18 +117,27 @@ serve(async (req) => {
           .eq('id', source.id)
 
       } catch (error) {
-        console.error(`Error processing ${source.name}:`, error)
+        if (error.name === 'AbortError') {
+          console.error(`Timeout processing ${source.name}`)
+        } else {
+          console.error(`Error processing ${source.name}:`, error)
+        }
+        errorCount++
       }
     }
+
+    console.log(`RSS Processing complete: ${successCount} successful, ${errorCount} failed`)
 
     return new Response(
       JSON.stringify({
         success: true,
         message: `Processed ${totalProcessed} items, ${totalNew} new/updated`,
-        sources_processed: sources.length
+        sources_processed: sources.length,
+        successful: successCount,
+        failed: errorCount
       }),
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     )
@@ -116,7 +147,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }),
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       }
     )

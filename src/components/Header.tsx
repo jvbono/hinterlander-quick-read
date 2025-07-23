@@ -31,7 +31,7 @@ const Header = ({ onRefresh, isRefreshing, activeFilter, onFilterChange, selecte
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-foreground">The Hinterlander</h1>
-            <p className="text-xs text-muted-foreground">One Page, fewer solitudes.</p>
+            <p className="text-xs text-muted-foreground">One page, fewer solitudes.</p>
             {selectedProvince && (
               <p className="text-xs text-primary mt-1">Showing stories from {selectedProvince}</p>
             )}

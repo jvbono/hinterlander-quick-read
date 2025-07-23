@@ -137,24 +137,24 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
             <ColumnSection
               title="News"
-              description="Just the facts, from Canada's national and regional reporting networks."
-              icon="📰"
+              description=""
+              icon=""
               articles={organizedNews.news}
               accentColor="bg-blue-500"
             />
             
             <ColumnSection
               title="Opinion"
-              description="Sharp perspectives and timely takes from editors and columnists."
-              icon="🗣️"
+              description=""
+              icon=""
               articles={organizedNews.opinion}
               accentColor="bg-orange-500"
             />
             
             <ColumnSection
-              title="Commentary"
-              description="Thoughtful reflections, essays, and alternative voices worth your time."
-              icon="🧭"
+              title="Currents"
+              description=""
+              icon=""
               articles={organizedNews.commentary}
               accentColor="bg-purple-500"
             />

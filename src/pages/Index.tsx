@@ -1,31 +1,36 @@
 
 import { useState, useMemo } from 'react';
 import Header from '../components/Header';
-import NewsCard from '../components/NewsCard';
-import CategoryFilter from '../components/CategoryFilter';
+import ColumnSection from '../components/ColumnSection';
 import { useNews } from '../hooks/useNews';
 import { Skeleton } from '../components/ui/skeleton';
-import { Button } from '../components/ui/button';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from '../hooks/use-toast';
+import { NewsItem } from '../types/news';
 
 const Index = () => {
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeFilter, setActiveFilter] = useState('All');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   
-  const categories = ['All', 'National', 'Provincial', 'Opinion', 'Rural'];
-  
-  const { data: newsData = [], isLoading, error, refetch } = useNews(activeCategory);
+  const { data: newsData = [], isLoading, error, refetch } = useNews(activeFilter);
 
-  const categoryStats = useMemo(() => {
-    if (!newsData.length) return { All: 0 };
+  // Organize articles by type
+  const organizedNews = useMemo(() => {
+    if (!newsData.length) return { news: [], opinion: [], commentary: [] };
     
-    const stats: Record<string, number> = { All: newsData.length };
-    categories.slice(1).forEach(category => {
-      stats[category] = newsData.filter(item => item.category === category).length;
-    });
-    return stats;
+    const news = newsData.filter(item => 
+      ['National', 'Provincial', 'Rural'].includes(item.category)
+    );
+    
+    const opinion = newsData.filter(item => 
+      item.category === 'Opinion'
+    );
+    
+    // For now, commentary will be empty until we add new sources
+    const commentary: NewsItem[] = [];
+    
+    return { news, opinion, commentary };
   }, [newsData]);
 
   const handleRefreshNews = async () => {
@@ -61,7 +66,12 @@ const Index = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        <Header 
+          onRefresh={handleRefreshNews}
+          isRefreshing={isRefreshing}
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+        />
         <main className="container mx-auto px-4 py-6">
           <div className="text-center py-12">
             <p className="text-red-600 mb-4">Error loading news: {error.message}</p>
@@ -79,73 +89,80 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header 
+        onRefresh={handleRefreshNews}
+        isRefreshing={isRefreshing}
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+      />
       
-      <main className="container mx-auto px-4 py-6">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">
-            {activeCategory === 'All' ? 'Canadian news, clearly organized' : `${activeCategory} News`}
-          </h2>
-        </div>
-
-        <div className="mb-6">
-          <CategoryFilter 
-            categories={categories} 
-            activeCategory={activeCategory}
-            onCategoryChange={setActiveCategory}
-          />
-          
-          <div className="mt-4 flex justify-center">
-            <Button 
-              onClick={handleRefreshNews} 
-              disabled={isRefreshing}
-              variant="outline"
-            >
-              {isRefreshing ? 'Refreshing...' : 'Refresh News Feeds'}
-            </Button>
-          </div>
-        </div>
-
+      <main className="container mx-auto px-6 py-8">
         {isLoading ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="border rounded-lg p-6">
-                <Skeleton className="h-4 w-20 mb-4" />
-                <Skeleton className="h-6 w-full mb-2" />
-                <Skeleton className="h-4 w-full mb-1" />
-                <Skeleton className="h-4 w-3/4 mb-4" />
-                <Skeleton className="h-4 w-24" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="space-y-4">
+                <div className="mb-6 pb-4 border-b border-border/50">
+                  <Skeleton className="h-6 w-32 mb-2" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+                {Array.from({ length: 5 }).map((_, j) => (
+                  <div key={j} className="pb-4 mb-4 border-b border-border/30">
+                    <Skeleton className="h-3 w-24 mb-2" />
+                    <Skeleton className="h-5 w-full mb-2" />
+                    <Skeleton className="h-4 w-full mb-1" />
+                    <Skeleton className="h-4 w-3/4 mb-3" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                ))}
               </div>
             ))}
           </div>
         ) : (
-          <>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {newsData.map((item) => (
-                <NewsCard key={item.id} item={item} />
-              ))}
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+            <ColumnSection
+              title="News"
+              description="Just the facts, from Canada's national and regional reporting networks."
+              icon="📰"
+              articles={organizedNews.news}
+              accentColor="bg-blue-500"
+            />
+            
+            <ColumnSection
+              title="Opinion"
+              description="Sharp perspectives and timely takes from editors and columnists."
+              icon="🗣️"
+              articles={organizedNews.opinion}
+              accentColor="bg-orange-500"
+            />
+            
+            <ColumnSection
+              title="Commentary"
+              description="Thoughtful reflections, essays, and alternative voices worth your time."
+              icon="🧭"
+              articles={organizedNews.commentary}
+              accentColor="bg-purple-500"
+            />
+          </div>
+        )}
 
-            {newsData.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground mb-4">No stories found in this category.</p>
-                <Button 
-                  onClick={handleRefreshNews} 
-                  disabled={isRefreshing}
-                  variant="default"
-                >
-                  {isRefreshing ? 'Loading News...' : 'Load Latest News'}
-                </Button>
-              </div>
-            )}
-          </>
+        {!isLoading && newsData.length === 0 && (
+          <div className="text-center py-16">
+            <p className="text-muted-foreground mb-6">No stories available at the moment.</p>
+            <button
+              onClick={handleRefreshNews}
+              disabled={isRefreshing}
+              className="text-primary hover:text-primary/80 transition-colors font-medium"
+            >
+              {isRefreshing ? 'Loading News...' : 'Load Latest News'}
+            </button>
+          </div>
         )}
       </main>
       
-      <footer className="border-t mt-12 py-6">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-xs text-muted-foreground">
-            Hinterlander aggregates Canadian news from diverse sources. 
+      <footer className="border-t mt-16 py-8">
+        <div className="container mx-auto px-6 text-center">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            The Hinterlander aggregates Canadian news from diverse sources.<br />
             Stories link directly to original publishers.
           </p>
         </div>

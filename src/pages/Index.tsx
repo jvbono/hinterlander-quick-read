@@ -10,20 +10,32 @@ import { NewsItem } from '../types/news';
 
 const Index = () => {
   const [activeFilter, setActiveFilter] = useState('All');
+  const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   
   const { data: newsData = [], isLoading, error, refetch } = useNews(activeFilter);
 
-  // Organize articles by type
+  // Organize and filter articles by type and province
   const organizedNews = useMemo(() => {
     if (!newsData.length) return { news: [], opinion: [], commentary: [] };
     
-    const news = newsData.filter(item => 
+    let filteredData = newsData;
+    
+    // Filter by province if selected
+    if (selectedProvince) {
+      filteredData = newsData.filter(item => 
+        item.title.toLowerCase().includes(selectedProvince.toLowerCase()) ||
+        item.summary?.toLowerCase().includes(selectedProvince.toLowerCase()) ||
+        item.source.toLowerCase().includes(selectedProvince.toLowerCase())
+      );
+    }
+    
+    const news = filteredData.filter(item => 
       ['National', 'Provincial', 'Rural'].includes(item.category)
     );
     
-    const opinion = newsData.filter(item => 
+    const opinion = filteredData.filter(item => 
       item.category === 'Opinion'
     );
     
@@ -31,7 +43,7 @@ const Index = () => {
     const commentary: NewsItem[] = [];
     
     return { news, opinion, commentary };
-  }, [newsData]);
+  }, [newsData, selectedProvince]);
 
   const handleRefreshNews = async () => {
     setIsRefreshing(true);
@@ -71,6 +83,8 @@ const Index = () => {
           isRefreshing={isRefreshing}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
+          selectedProvince={selectedProvince}
+          onProvinceChange={setSelectedProvince}
         />
         <main className="container mx-auto px-4 py-6">
           <div className="text-center py-12">
@@ -94,6 +108,8 @@ const Index = () => {
         isRefreshing={isRefreshing}
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}
+        selectedProvince={selectedProvince}
+        onProvinceChange={setSelectedProvince}
       />
       
       <main className="container mx-auto px-6 py-8">

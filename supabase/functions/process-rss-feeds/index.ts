@@ -64,8 +64,9 @@ serve(async (req) => {
         const response = await fetch(source.rss_feed_url, {
           signal: controller.signal,
           headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; HinterlanderBot/1.0)',
-            'Accept': 'application/rss+xml, application/xml, text/xml'
+            'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0; +https://hinterlander.ca)',
+            'Accept': 'application/rss+xml, application/xml, text/xml',
+            'Cache-Control': 'no-cache'
           }
         })
 

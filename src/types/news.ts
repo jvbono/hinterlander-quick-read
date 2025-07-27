@@ -5,7 +5,7 @@ export interface NewsItem {
   summary: string;
   source: string;
   publishedAt: Date;
-  category: 'National' | 'Provincial' | 'Opinion' | 'Rural';
+  category: 'National' | 'Provincial' | 'Opinion' | 'Rural' | 'Commentary';
   url: string;
   imageUrl?: string;
 }

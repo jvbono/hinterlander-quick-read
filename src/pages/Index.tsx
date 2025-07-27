@@ -39,13 +39,9 @@ const Index = () => {
       item.category === 'Opinion'
     );
     
-    // Currents includes rural news and analysis pieces
+    // Currents includes substacks and podcasts
     const commentary = filteredData.filter(item => 
-      item.category === 'Rural' || 
-      item.title.toLowerCase().includes('analysis') ||
-      item.title.toLowerCase().includes('feature') ||
-      item.summary?.toLowerCase().includes('analysis') ||
-      item.summary?.toLowerCase().includes('feature')
+      item.category === 'Commentary'
     );
     
     return { news, opinion, commentary };

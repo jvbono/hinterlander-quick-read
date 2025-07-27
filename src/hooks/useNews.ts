@@ -30,7 +30,7 @@ export const useNews = (category?: string) => {
         summary: item.summary || '',
         source: item.source,
         publishedAt: new Date(item.published_at),
-        category: item.category as 'National' | 'Provincial' | 'Opinion' | 'Rural',
+        category: item.category as 'National' | 'Provincial' | 'Opinion' | 'Rural' | 'Commentary',
         url: item.url,
         imageUrl: item.image_url
       }));

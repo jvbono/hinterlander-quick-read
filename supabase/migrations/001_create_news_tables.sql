@@ -41,7 +41,7 @@ INSERT INTO news_sources (name, type, rss_url, tags) VALUES
 ('CBC News', 'mainstream', 'https://www.cbc.ca/cmlink/rss-topstories', ARRAY['national', 'general']),
 ('Globe and Mail', 'mainstream', 'https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/', ARRAY['national', 'business']),
 ('CTV News', 'mainstream', 'https://www.ctvnews.ca/rss/ctvnews-ca-top-stories-public-rss-1.822009', ARRAY['national', 'general']),
-('National Post', 'mainstream', 'https://nationalpost.com/feed/', ARRAY['national', 'politics']),
+('National Post', 'mainstream', 'https://nationalpost.com/feed/', ARRAY['national', 'culture', 'politics']),
 ('Toronto Star', 'mainstream', 'https://www.thestar.com/news.rss', ARRAY['provincial', 'ontario']),
 ('The Line', 'independent', 'https://theline.substack.com/feed', ARRAY['opinion', 'politics']),
 ('Canadaland', 'independent', 'https://www.canadaland.com/feed/', ARRAY['media', 'opinion']),
@@ -68,7 +68,7 @@ INSERT INTO news_sources (name, type, rss_url, tags) VALUES
 ('Stratford Beacon Herald', 'mainstream', 'https://www.stratfordbeaconherald.com/feed', ARRAY['local', 'ontario']),
 ('Daily Herald Tribune', 'mainstream', 'https://www.dailyheraldtribune.com/feed', ARRAY['local', 'alberta']),
 ('YGK News', 'independent', 'https://ygknews.ca/feed/', ARRAY['local', 'ontario']),
-('Prince Albert Daily Herald', 'mainstream', 'https://paherald.sk.ca/feed/', ARRAY['local', 'saskatchewan']),
+('Prince Albert Daily Herald', 'mainstream', 'https://paherald.sk.ca/feed/', ARRAY['local', 'culture', 'saskatchewan']),
 ('Sunny South News', 'mainstream', 'https://www.sunnysouthnews.com/feed/', ARRAY['local', 'alberta']),
 ('The Tyee', 'independent', 'https://thetyee.ca/rss2.xml', ARRAY['commentary', 'british-columbia']),
 ('National Observer', 'independent', 'https://www.nationalobserver.com/front/rss', ARRAY['opinion', 'national']),
@@ -77,4 +77,5 @@ INSERT INTO news_sources (name, type, rss_url, tags) VALUES
 ('The Afro News', 'independent', 'https://theafronews.com/feed/', ARRAY['commentary', 'diversity']),
 ('The Canadian Press', 'mainstream', 'https://www.thecanadianpressnews.ca/search/?f=rss', ARRAY['national', 'wire']),
 ('Rabble.ca', 'independent', 'https://rabble.ca/feed/', ARRAY['opinion', 'progressive']);
+('WIRED', 'mainstream', 'https://www.wired.com/feed/rss', ARRAY['opinion', 'technology', 'culture']);
 

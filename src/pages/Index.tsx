@@ -32,15 +32,21 @@ const Index = () => {
     }
     
     const news = filteredData.filter(item => 
-      ['National', 'Provincial', 'Rural'].includes(item.category)
+      ['National', 'Provincial'].includes(item.category)
     );
     
     const opinion = filteredData.filter(item => 
       item.category === 'Opinion'
     );
     
-    // For now, commentary will be empty until we add new sources
-    const commentary: NewsItem[] = [];
+    // Currents includes rural news and analysis pieces
+    const commentary = filteredData.filter(item => 
+      item.category === 'Rural' || 
+      item.title.toLowerCase().includes('analysis') ||
+      item.title.toLowerCase().includes('feature') ||
+      item.summary?.toLowerCase().includes('analysis') ||
+      item.summary?.toLowerCase().includes('feature')
+    );
     
     return { news, opinion, commentary };
   }, [newsData, selectedProvince]);

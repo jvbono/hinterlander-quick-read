@@ -16,9 +16,9 @@ const Index = () => {
   
   const { data: newsData = [], isLoading, error, refetch } = useNews(activeFilter);
 
-  // Organize and filter articles by type and province
+  // Organize and filter articles by target column and province
   const organizedNews = useMemo(() => {
-    if (!newsData.length) return { news: [], opinion: [], commentary: [] };
+    if (!newsData.length) return { news: [], opinion: [], currents: [] };
     
     let filteredData = newsData;
     
@@ -31,20 +31,20 @@ const Index = () => {
       );
     }
     
+    // Filter by target_column from news sources
     const news = filteredData.filter(item => 
-      ['National', 'Provincial'].includes(item.category)
+      item.target_column === 'news'
     );
     
     const opinion = filteredData.filter(item => 
-      item.category === 'Opinion'
+      item.target_column === 'opinion'
     );
     
-    // Currents includes substacks and podcasts
-    const commentary = filteredData.filter(item => 
-      item.category === 'Commentary'
+    const currents = filteredData.filter(item => 
+      item.target_column === 'currents'
     );
     
-    return { news, opinion, commentary };
+    return { news, opinion, currents };
   }, [newsData, selectedProvince]);
 
   const handleRefreshNews = async () => {
@@ -157,7 +157,7 @@ const Index = () => {
               title="Currents"
               description=""
               icon=""
-              articles={organizedNews.commentary}
+              articles={organizedNews.currents}
               accentColor="bg-purple-500"
             />
           </div>

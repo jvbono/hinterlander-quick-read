@@ -9,7 +9,10 @@ export const useNews = (category?: string) => {
     queryFn: async (): Promise<NewsItem[]> => {
       let query = supabase
         .from('news_items')
-        .select('*')
+        .select(`
+          *,
+          news_sources!inner(target_column)
+        `)
         .order('published_at', { ascending: false })
         .limit(50);
 
@@ -32,7 +35,8 @@ export const useNews = (category?: string) => {
         publishedAt: new Date(item.published_at),
         category: item.category as 'National' | 'Provincial' | 'Opinion' | 'Rural' | 'Commentary',
         url: item.url,
-        imageUrl: item.image_url
+        imageUrl: item.image_url,
+        target_column: item.news_sources?.target_column as 'news' | 'opinion' | 'currents'
       }));
     },
     staleTime: 5 * 60 * 1000, // 5 minutes

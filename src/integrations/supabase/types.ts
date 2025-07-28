@@ -65,6 +65,7 @@ export type Database = {
           last_fetched_at: string | null
           name: string
           rss_feed_url: string
+          target_column: string | null
           updated_at: string
           url: string
         }
@@ -76,6 +77,7 @@ export type Database = {
           last_fetched_at?: string | null
           name: string
           rss_feed_url: string
+          target_column?: string | null
           updated_at?: string
           url: string
         }
@@ -87,6 +89,7 @@ export type Database = {
           last_fetched_at?: string | null
           name?: string
           rss_feed_url?: string
+          target_column?: string | null
           updated_at?: string
           url?: string
         }

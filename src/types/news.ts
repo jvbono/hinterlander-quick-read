@@ -8,6 +8,7 @@ export interface NewsItem {
   category: 'National' | 'Provincial' | 'Opinion' | 'Rural' | 'Commentary';
   url: string;
   imageUrl?: string;
+  target_column?: 'news' | 'opinion' | 'currents';
 }
 
 export interface NewsSource {

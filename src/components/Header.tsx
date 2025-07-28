@@ -17,7 +17,7 @@ interface HeaderProps {
 }
 
 const Header = ({ onRefresh, isRefreshing, activeFilter, onFilterChange, selectedProvince, onProvinceChange }: HeaderProps) => {
-  const filters = ['All', 'National', 'Provincial', 'Rural'];
+  const filters = ['All', 'National'];
   
   const provinces = [
     'Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 

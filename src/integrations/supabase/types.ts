@@ -7,10 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
@@ -23,6 +23,7 @@ export type Database = {
           image_url: string | null
           published_at: string
           source: string
+          source_id: string
           summary: string | null
           title: string
           updated_at: string
@@ -36,6 +37,7 @@ export type Database = {
           image_url?: string | null
           published_at: string
           source: string
+          source_id: string
           summary?: string | null
           title: string
           updated_at?: string
@@ -49,12 +51,21 @@ export type Database = {
           image_url?: string | null
           published_at?: string
           source?: string
+          source_id?: string
           summary?: string | null
           title?: string
           updated_at?: string
           url?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "news_items_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "news_sources"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       news_sources: {
         Row: {

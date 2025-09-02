@@ -11,7 +11,7 @@ export const useNews = (category?: string) => {
         .from('news_items')
         .select(`
           *,
-          news_sources!inner(target_column)
+          news_sources!source_id(target_column, name)
         `)
         .order('published_at', { ascending: false })
         .limit(50);

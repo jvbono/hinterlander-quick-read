@@ -89,6 +89,7 @@ serve(async (req) => {
             title: cleanText(item.title),
             summary: cleanText(item.description),
             source: source.name,
+            source_id: source.id,
             published_at: parseDate(item.pubDate),
             category: categorizeNews(item, source),
             url: item.link,

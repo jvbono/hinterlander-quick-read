@@ -2,11 +2,11 @@
 import { useState, useMemo } from 'react';
 import Header from '../components/Header';
 import ColumnSection from '../components/ColumnSection';
-import { useNews } from '../hooks/useNews';
+import { useLinks } from '../hooks/useNews';
 import { Skeleton } from '../components/ui/skeleton';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from '../hooks/use-toast';
-import { NewsItem } from '../types/news';
+import { Link } from '../types/news';
 
 const Index = () => {
   const [activeFilter, setActiveFilter] = useState('All');
@@ -14,20 +14,20 @@ const Index = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   
-  const { data: newsData = [], isLoading, error, refetch } = useNews(activeFilter);
+  const { data: linksData = [], isLoading, error, refetch } = useLinks();
 
   // Organize and filter articles by target column and province
   const organizedNews = useMemo(() => {
-    if (!newsData.length) return { news: [], opinion: [], currents: [] };
+    if (!linksData.length) return { news: [], opinion: [], currents: [] };
     
-    let filteredData = newsData;
+    let filteredData = linksData;
     
     // Filter by province if selected
     if (selectedProvince) {
-      filteredData = newsData.filter(item => 
+      filteredData = linksData.filter(item => 
         item.title.toLowerCase().includes(selectedProvince.toLowerCase()) ||
         item.summary?.toLowerCase().includes(selectedProvince.toLowerCase()) ||
-        item.source.toLowerCase().includes(selectedProvince.toLowerCase())
+        item.source_name.toLowerCase().includes(selectedProvince.toLowerCase())
       );
     }
     
@@ -45,7 +45,7 @@ const Index = () => {
     );
     
     return { news, opinion, currents };
-  }, [newsData, selectedProvince]);
+  }, [linksData, selectedProvince]);
 
   const handleRefreshNews = async () => {
     setIsRefreshing(true);
@@ -163,7 +163,7 @@ const Index = () => {
           </div>
         )}
 
-        {!isLoading && newsData.length === 0 && (
+        {!isLoading && linksData.length === 0 && (
           <div className="text-center py-16">
             <p className="text-muted-foreground mb-6">No stories available at the moment.</p>
             <button

@@ -1,12 +1,13 @@
-import { NewsItem } from '../types/news';
+import { Link } from '../types/news';
 
 interface ArticleCardProps {
-  article: NewsItem;
+  article: Link;
   accentColor: string;
 }
 
 const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
-  const formatTime = (date: Date) => {
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
     
@@ -23,14 +24,14 @@ const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
     <article className="group pb-4 mb-4 border-b border-border/30 last:border-b-0">
       <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
         <span className={`inline-block w-1.5 h-1.5 rounded-full ${accentColor}`}></span>
-        <span className="font-medium">{article.source}</span>
+        <span className="font-medium">{article.source_name}</span>
         <span>•</span>
-        <time>{formatTime(article.publishedAt)}</time>
+        <time>{formatTime(article.published_at)}</time>
       </div>
       
       <h3 className="text-base font-medium text-foreground mb-2 leading-snug group-hover:text-primary transition-colors">
         <a 
-          href={article.url} 
+          href={article.canonical_url} 
           target="_blank" 
           rel="noopener noreferrer"
           className="hover:underline"
@@ -46,7 +47,7 @@ const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
       )}
       
       <a 
-        href={article.url} 
+        href={article.canonical_url} 
         target="_blank" 
         rel="noopener noreferrer"
         className="inline-flex items-center text-xs text-primary hover:text-primary/80 transition-colors font-medium"

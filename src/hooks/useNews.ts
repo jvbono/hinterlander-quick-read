@@ -1,42 +1,63 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
-import { NewsItem } from '../types/news';
 
-export const useNews = (category?: string) => {
+export interface Link {
+  id: string;
+  canonical_url: string;
+  title: string;
+  summary: string | null;
+  published_at: string;
+  image_url: string | null;
+  first_seen_at: string;
+  last_seen_at: string;
+  source_name: string;
+  category: string;
+  target_column: string;
+}
+
+export const useLinks = (targetColumn?: string) => {
   return useQuery({
-    queryKey: ['news', category],
-    queryFn: async (): Promise<NewsItem[]> => {
+    queryKey: ['links', targetColumn],
+    queryFn: async (): Promise<Link[]> => {
       let query = supabase
-        .from('news_items')
+        .from('links')
         .select(`
           *,
-          news_sources!inner(target_column, name)
+          link_sources!inner(
+            category,
+            news_sources!inner(
+              name,
+              target_column
+            )
+          )
         `)
         .order('published_at', { ascending: false })
         .limit(50);
 
-      if (category && category !== 'All') {
-        query = query.eq('category', category);
+      if (targetColumn && targetColumn !== 'all') {
+        query = query.eq('link_sources.news_sources.target_column', targetColumn);
       }
 
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error fetching news:', error);
+        console.error('Error fetching links:', error);
         throw new Error(error.message);
       }
 
       return data.map((item: any) => ({
         id: item.id,
+        canonical_url: item.canonical_url,
         title: item.title,
         summary: item.summary || '',
-        source: item.source,
-        publishedAt: new Date(item.published_at),
-        category: item.category as 'National' | 'Provincial' | 'Opinion' | 'Rural' | 'Commentary',
-        url: item.url,
-        imageUrl: item.image_url,
-        target_column: item.news_sources?.target_column as 'news' | 'opinion' | 'currents'
+        published_at: new Date(item.published_at).toISOString(),
+        image_url: item.image_url,
+        first_seen_at: item.first_seen_at,
+        last_seen_at: item.last_seen_at,
+        source_name: item.link_sources[0]?.news_sources?.name || '',
+        category: item.link_sources[0]?.category || '',
+        target_column: item.link_sources[0]?.news_sources?.target_column || ''
       }));
     },
     staleTime: 5 * 60 * 1000, // 5 minutes

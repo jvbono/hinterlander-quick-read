@@ -1,11 +1,11 @@
-import { NewsItem } from '../types/news';
+import { Link } from '../types/news';
 import ArticleCard from './ArticleCard';
 
 interface ColumnSectionProps {
   title: string;
   description: string;
   icon: string;
-  articles: NewsItem[];
+  articles: Link[];
   accentColor: string;
 }
 

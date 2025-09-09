@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      link_sources: {
+        Row: {
+          category: string
+          created_at: string
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          link_id: string
+          source_id: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          link_id: string
+          source_id: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          link_id?: string
+          source_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "link_sources_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "link_sources_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "news_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      links: {
+        Row: {
+          canonical_url: string
+          created_at: string
+          first_seen_at: string
+          id: string
+          image_url: string | null
+          last_seen_at: string
+          published_at: string
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          canonical_url: string
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          image_url?: string | null
+          last_seen_at?: string
+          published_at: string
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          canonical_url?: string
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          image_url?: string | null
+          last_seen_at?: string
+          published_at?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       news_items: {
         Row: {
           category: string

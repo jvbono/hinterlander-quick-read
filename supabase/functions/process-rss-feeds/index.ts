@@ -83,29 +83,79 @@ serve(async (req) => {
         
         console.log(`Found ${rssItems.length} items from ${source.name}`)
 
-        // Process each RSS item
+        // Process each RSS item with deduplication
         for (const item of rssItems) {
-          const newsItem = {
-            title: cleanText(item.title),
-            summary: cleanText(item.description),
-            source: source.name,
-            source_id: source.id,
-            published_at: parseDate(item.pubDate),
-            category: categorizeNews(item, source),
-            url: item.link,
-            image_url: extractImageUrl(item.description)
+          const canonicalUrl = cleanUrl(item.link)
+          const publishedDate = parseDate(item.pubDate)
+          
+          // Check if link already exists
+          const { data: existingLink, error: linkQueryError } = await supabaseClient
+            .from('links')
+            .select('id')
+            .eq('canonical_url', canonicalUrl)
+            .maybeSingle()
+          
+          if (linkQueryError) {
+            console.error(`Error querying existing link: ${linkQueryError.message}`)
+            continue
           }
-
-          // Insert news item with upsert to handle duplicates
-          const { error: insertError } = await supabaseClient
-            .from('news_items')
-            .upsert(newsItem, { 
-              onConflict: 'url',
-              ignoreDuplicates: true 
-            })
-
-          if (!insertError) {
+          
+          let linkId: string
+          
+          if (existingLink) {
+            // Update last_seen_at for existing link
+            const { error: updateError } = await supabaseClient
+              .from('links')
+              .update({ last_seen_at: new Date().toISOString() })
+              .eq('id', existingLink.id)
+            
+            if (updateError) {
+              console.error(`Error updating link: ${updateError.message}`)
+              continue
+            }
+            
+            linkId = existingLink.id
+          } else {
+            // Create new link
+            const linkData = {
+              canonical_url: canonicalUrl,
+              title: cleanText(item.title),
+              summary: cleanText(item.description),
+              published_at: publishedDate,
+              image_url: extractImageUrl(item.description)
+            }
+            
+            const { data: newLink, error: insertError } = await supabaseClient
+              .from('links')
+              .insert(linkData)
+              .select('id')
+              .single()
+            
+            if (insertError || !newLink) {
+              console.error(`Error inserting link: ${insertError?.message}`)
+              continue
+            }
+            
+            linkId = newLink.id
             totalNew++
+          }
+          
+          // Now handle the link_sources relationship
+          const category = categorizeNews(item, source)
+          
+          const { error: linkSourceError } = await supabaseClient
+            .from('link_sources')
+            .upsert({
+              link_id: linkId,
+              source_id: source.id,
+              category,
+              last_seen_at: new Date().toISOString()
+            }, {
+              onConflict: 'link_id,source_id'
+            })
+          
+          if (linkSourceError) {
+            console.error(`Error upserting link_source: ${linkSourceError.message}`)
           }
         }
 
@@ -242,4 +292,36 @@ function extractImageUrl(description: string): string | null {
   const imgRegex = /<img[^>]+src="([^"]+)"/i
   const match = imgRegex.exec(description)
   return match ? match[1] : null
+}
+
+function cleanUrl(url: string): string {
+  if (!url) return ''
+  
+  try {
+    const urlObj = new URL(url)
+    
+    // Remove common tracking parameters
+    const trackingParams = [
+      'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+      'fbclid', 'gclid', 'msclkid', 'mc_cid', 'mc_eid',
+      '_ga', '_gl', 'ref', 'source', 'campaign'
+    ]
+    
+    trackingParams.forEach(param => {
+      urlObj.searchParams.delete(param)
+    })
+    
+    // Normalize the URL
+    let cleanedUrl = urlObj.toString()
+    
+    // Remove trailing slash for consistency (except for root paths)
+    if (cleanedUrl.endsWith('/') && cleanedUrl !== urlObj.origin + '/') {
+      cleanedUrl = cleanedUrl.slice(0, -1)
+    }
+    
+    return cleanedUrl.toLowerCase()
+  } catch {
+    // If URL parsing fails, return original URL cleaned up
+    return url.trim().toLowerCase()
+  }
 }

@@ -16,6 +16,9 @@ const Index = () => {
   
   const { data: linksData = [], isLoading, error, refetch } = useLinks();
 
+  console.log('Debug - Links data:', linksData.length, 'items loaded');
+  console.log('Debug - First few items:', linksData.slice(0, 2));
+
   // Organize and filter articles by target column and province
   const organizedNews = useMemo(() => {
     if (!linksData.length) return { news: [], opinion: [], currents: [] };

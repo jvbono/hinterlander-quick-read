@@ -20,6 +20,8 @@ export const useLinks = (targetColumn?: string) => {
   return useQuery({
     queryKey: ['links', targetColumn],
     queryFn: async (): Promise<Link[]> => {
+      console.log('Debug - useLinks called with targetColumn:', targetColumn);
+      
       let query = supabase
         .from('links')
         .select(`
@@ -39,6 +41,7 @@ export const useLinks = (targetColumn?: string) => {
         query = query.eq('link_sources.news_sources.target_column', targetColumn);
       }
 
+      console.log('Debug - About to execute query');
       const { data, error } = await query;
 
       if (error) {
@@ -46,19 +49,33 @@ export const useLinks = (targetColumn?: string) => {
         throw new Error(error.message);
       }
 
-      return data.map((item: any) => ({
-        id: item.id,
-        canonical_url: item.canonical_url,
-        title: item.title,
-        summary: item.summary || '',
-        published_at: new Date(item.published_at).toISOString(),
-        image_url: item.image_url,
-        first_seen_at: item.first_seen_at,
-        last_seen_at: item.last_seen_at,
-        source_name: item.link_sources[0]?.news_sources?.name || '',
-        category: item.link_sources[0]?.category || '',
-        target_column: item.link_sources[0]?.news_sources?.target_column || ''
-      }));
+      console.log('Debug - Raw data from query:', data?.length, 'items');
+      console.log('Debug - First raw item:', data?.[0]);
+
+      // Handle the nested data structure properly
+      const transformedData = data.map((item: any) => {
+        const linkSource = Array.isArray(item.link_sources) ? item.link_sources[0] : item.link_sources;
+        const newsSource = linkSource?.news_sources;
+        
+        return {
+          id: item.id,
+          canonical_url: item.canonical_url,
+          title: item.title,
+          summary: item.summary || '',
+          published_at: item.published_at,
+          image_url: item.image_url,
+          first_seen_at: item.first_seen_at,
+          last_seen_at: item.last_seen_at,
+          source_name: newsSource?.name || '',
+          category: linkSource?.category || '',
+          target_column: newsSource?.target_column || ''
+        };
+      });
+
+      console.log('Debug - Transformed data:', transformedData.length, 'items');
+      console.log('Debug - First transformed item:', transformedData[0]);
+
+      return transformedData;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 10 * 60 * 1000, // 10 minutes

@@ -104,6 +104,13 @@ const Index = () => {
       item.target_column === 'currents'
     );
     
+    console.log('Debug - Organized articles:', { 
+      newsCount: news.length, 
+      opinionCount: opinion.length, 
+      currentsCount: currents.length 
+    });
+    console.log('Debug - Sample currents articles:', currents.slice(0, 3).map(a => ({ title: a.title, target_column: a.target_column })));
+    
     return { news, opinion, currents };
   }, [linksData, selectedProvince]);
 

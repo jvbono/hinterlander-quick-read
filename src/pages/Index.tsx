@@ -27,11 +27,68 @@ const Index = () => {
     
     // Filter by province if selected
     if (selectedProvince) {
-      filteredData = linksData.filter(item => 
-        item.title.toLowerCase().includes(selectedProvince.toLowerCase()) ||
-        item.summary?.toLowerCase().includes(selectedProvince.toLowerCase()) ||
-        item.source_name.toLowerCase().includes(selectedProvince.toLowerCase())
-      );
+      // Create province matching patterns including common abbreviations
+      const getProvincePatterns = (province: string) => {
+        const patterns = [province.toLowerCase()];
+        
+        switch (province) {
+          case 'British Columbia':
+            patterns.push('b.c.', 'bc', 'british columbia', 'kelowna', 'vancouver', 'victoria', 'bcgeu');
+            break;
+          case 'Alberta':
+            patterns.push('ab', 'alberta', 'calgary', 'edmonton');
+            break;
+          case 'Ontario':
+            patterns.push('on', 'ontario', 'toronto', 'ottawa');
+            break;
+          case 'Quebec':
+            patterns.push('qc', 'quebec', 'montreal');
+            break;
+          case 'Saskatchewan':
+            patterns.push('sk', 'saskatchewan', 'saskatoon', 'regina');
+            break;
+          case 'Manitoba':
+            patterns.push('mb', 'manitoba', 'winnipeg');
+            break;
+          case 'Nova Scotia':
+            patterns.push('ns', 'nova scotia', 'halifax');
+            break;
+          case 'New Brunswick':
+            patterns.push('nb', 'new brunswick', 'fredericton');
+            break;
+          case 'Newfoundland and Labrador':
+            patterns.push('nl', 'newfoundland', 'labrador', 'st. john\'s');
+            break;
+          case 'Prince Edward Island':
+            patterns.push('pei', 'prince edward island', 'charlottetown');
+            break;
+          case 'Northwest Territories':
+            patterns.push('nt', 'nwt', 'northwest territories', 'yellowknife');
+            break;
+          case 'Nunavut':
+            patterns.push('nu', 'nunavut', 'iqaluit');
+            break;
+          case 'Yukon':
+            patterns.push('yt', 'yukon', 'whitehorse');
+            break;
+        }
+        
+        return patterns;
+      };
+      
+      const provincePatterns = getProvincePatterns(selectedProvince);
+      
+      filteredData = linksData.filter(item => {
+        const titleText = item.title.toLowerCase();
+        const summaryText = item.summary?.toLowerCase() || '';
+        const sourceText = item.source_name.toLowerCase();
+        
+        return provincePatterns.some(pattern => 
+          titleText.includes(pattern) ||
+          summaryText.includes(pattern) ||
+          sourceText.includes(pattern)
+        );
+      });
     }
     
     // Filter by target_column from news sources

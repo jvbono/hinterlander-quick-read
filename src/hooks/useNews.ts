@@ -22,6 +22,7 @@ export const useLinks = (targetColumn?: string) => {
     queryFn: async (): Promise<Link[]> => {
       console.log('Debug - useLinks called with targetColumn:', targetColumn);
       
+      // Fetch more articles to ensure we get good distribution
       let query = supabase
         .from('links')
         .select(`
@@ -35,7 +36,7 @@ export const useLinks = (targetColumn?: string) => {
           )
         `)
         .order('published_at', { ascending: false })
-        .limit(50);
+        .limit(150);
 
       if (targetColumn && targetColumn !== 'all') {
         query = query.eq('link_sources.news_sources.target_column', targetColumn);

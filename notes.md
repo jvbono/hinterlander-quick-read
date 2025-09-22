@@ -1,13 +1,18 @@
+#General notes
+
 // useNews.ts gathers and organizes the news articles
+
 // supabase functions gets the news
+
     //why is supabase calling news_sources 
+
         A: news sources is used as the store for RSS Feeds
 
 //Possible flow: page load, cronjob calls update-rss-feed which calls process-rss-feed, which uses news_sources to generate news_links
 
 //CBC is returning a type error when update-rss-feed runs: suspected different feed formatting may be causing an issue
 
-//TODO//
+#//TODO//
 
 [X]figure out why supabase isn't getting articles from all rss feeds: test via cbc 
     possibly resolved: process rss function in supabase pulls from news_sources. CBC and TorStar rss links were incorrect. Fixed those. Should start seeing results

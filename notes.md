@@ -12,3 +12,4 @@
 [] fine tune classification logic, especially region (DB and frontend?)
 [X] determine why the frontend only displays 10 or so rows of articles. useNews.ts seems to have the limit set to 200
     A: ColumnSection.tsx had a limit on rows. removed and added endless scroll 10 rows per scroll. Original file preserved as copy
+[] Change logic so articles arent grouped by source. Current logic sorts by most recent. Some pubs dump a bunch of articles at a time, leading to ie. 5 Globe and Mail artcles in a row

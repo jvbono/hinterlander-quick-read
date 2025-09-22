@@ -20,26 +20,13 @@ const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
     }
   };
 
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   return (
     <article className="group pb-4 mb-4 border-b border-border/30 last:border-b-0">
       <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
         <span className={`inline-block w-1.5 h-1.5 rounded-full ${accentColor}`}></span>
         <span className="font-medium">{article.source_name}</span>
         <span>•</span>
-        <time>
-          Published: {formatDateTime(article.published_at)}
-        </time>
+        <time>{formatTime(article.published_at)}</time>
       </div>
       
       <h3 className="text-base font-medium text-foreground mb-2 leading-snug group-hover:text-primary transition-colors">

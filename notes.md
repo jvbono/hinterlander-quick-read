@@ -3,6 +3,8 @@
     //why is supabase calling news_sources 
         A: news sources is used as the store for RSS Feeds
 
+Possible flow: page load, cronjob calls update-rss-feed which calls process-rss-feed, which uses news_sources to generate news_links
+
 //TODO//
 
 [X]figure out why supabase isn't getting articles from all rss feeds: test via cbc 

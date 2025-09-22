@@ -3,7 +3,9 @@
     //why is supabase calling news_sources 
         A: news sources is used as the store for RSS Feeds
 
-Possible flow: page load, cronjob calls update-rss-feed which calls process-rss-feed, which uses news_sources to generate news_links
+//Possible flow: page load, cronjob calls update-rss-feed which calls process-rss-feed, which uses news_sources to generate news_links
+
+//CBC is returning a type error when update-rss-feed runs: suspected different feed formatting may be causing an issue
 
 //TODO//
 
@@ -15,3 +17,4 @@ Possible flow: page load, cronjob calls update-rss-feed which calls process-rss-
 [X] determine why the frontend only displays 10 or so rows of articles. useNews.ts seems to have the limit set to 200
     A: ColumnSection.tsx had a limit on rows. removed and added endless scroll 10 rows per scroll. Original file preserved as copy
 [] Change logic so articles arent grouped by source. Current logic sorts by most recent. Some pubs dump a bunch of articles at a time, leading to ie. 5 Globe and Mail artcles in a row
+[] Look into RSS formatting re CBC type error - might be fixed by adding/amending some of our types

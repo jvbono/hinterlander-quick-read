@@ -36,7 +36,7 @@ export const useLinks = (targetColumn?: string) => {
           )
         `)
         .order('published_at', { ascending: false })
-        .limit(200);
+        //.limit(200);
         
 
       if (targetColumn && targetColumn !== 'all') {

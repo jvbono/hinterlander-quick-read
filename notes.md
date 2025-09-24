@@ -54,16 +54,22 @@ VALUES
 COMMIT;
 
 // NEXT STEPS
+
  [] figure out why certain feeds still don't seem to be showing up (CBC, etc)
+ 
  [] update categories - news, commentary, current
       [] news is for reporting
       [] commentary is editorials, substacks, etc - essentially merging newspaper editorials with commentary from blogs, substacks, etc
       [] currents is long form, miscellaneous - some good examples Doctorow, Ed Zitron, jwz, more
       [] add podcasts - organize podcasts based on sections above, mix and match with written word
+      
  [] brand from Heath
      [] logo / wordmark
      [] colours
+     
  [] add more sources
+ 
  [] consider filters for ensuring diverse sources appear above fold, introduce pure chronological once scroll begins
+ 
  [] add button to share on Mastadon, Bluesky
 

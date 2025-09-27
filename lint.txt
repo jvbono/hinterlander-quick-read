@@ -1,0 +1,39 @@
+
+/Users/julian/hinterlander-quick-read/hinterlander-quick-read/hinterlander-quick-read/src/components/ColumnSection.tsx
+  41:38  warning  The ref value 'loaderRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'loaderRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+/Users/julian/hinterlander-quick-read/hinterlander-quick-read/hinterlander-quick-read/src/components/ui/badge.tsx
+  36:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/Users/julian/hinterlander-quick-read/hinterlander-quick-read/hinterlander-quick-read/src/components/ui/button.tsx
+  56:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/Users/julian/hinterlander-quick-read/hinterlander-quick-read/hinterlander-quick-read/src/components/ui/command.tsx
+  24:11  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/Users/julian/hinterlander-quick-read/hinterlander-quick-read/hinterlander-quick-read/src/components/ui/form.tsx
+  168:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/Users/julian/hinterlander-quick-read/hinterlander-quick-read/hinterlander-quick-read/src/components/ui/navigation-menu.tsx
+  119:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/Users/julian/hinterlander-quick-read/hinterlander-quick-read/hinterlander-quick-read/src/components/ui/sidebar.tsx
+  760:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/Users/julian/hinterlander-quick-read/hinterlander-quick-read/hinterlander-quick-read/src/components/ui/sonner.tsx
+  29:19  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/Users/julian/hinterlander-quick-read/hinterlander-quick-read/hinterlander-quick-read/src/components/ui/textarea.tsx
+  5:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/Users/julian/hinterlander-quick-read/hinterlander-quick-read/hinterlander-quick-read/src/components/ui/toggle.tsx
+  43:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/Users/julian/hinterlander-quick-read/hinterlander-quick-read/hinterlander-quick-read/src/hooks/useNews.ts
+  58:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/julian/hinterlander-quick-read/hinterlander-quick-read/hinterlander-quick-read/tailwind.config.ts
+  95:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+✖ 12 problems (4 errors, 8 warnings)
+

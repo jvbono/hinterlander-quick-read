@@ -1,0 +1,136 @@
+.
+├── .env
+├── .gitignore
+├── README.md
+├── bun.lockb
+├── components.json
+├── eslint.config.js
+├── implementation-plan.md
+├── index.html
+├── log.txt
+├── notes.md
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── public
+│   ├── favicon.ico
+│   ├── placeholder.svg
+│   └── robots.txt
+├── repo-tree.txt
+├── src
+│   ├── App.css
+│   ├── App.tsx
+│   ├── components
+│   │   ├── ArticleCard copy.tsx
+│   │   ├── ArticleCard.tsx
+│   │   ├── CategoryFilter.tsx
+│   │   ├── ColumnSection copy.tsx
+│   │   ├── ColumnSection.tsx
+│   │   ├── Header.tsx
+│   │   ├── NewsCard.tsx
+│   │   └── ui
+│   │       ├── accordion.tsx
+│   │       ├── alert-dialog.tsx
+│   │       ├── alert.tsx
+│   │       ├── aspect-ratio.tsx
+│   │       ├── avatar.tsx
+│   │       ├── badge.tsx
+│   │       ├── breadcrumb.tsx
+│   │       ├── button.tsx
+│   │       ├── calendar.tsx
+│   │       ├── card.tsx
+│   │       ├── carousel.tsx
+│   │       ├── chart.tsx
+│   │       ├── checkbox.tsx
+│   │       ├── collapsible.tsx
+│   │       ├── command.tsx
+│   │       ├── context-menu.tsx
+│   │       ├── dialog.tsx
+│   │       ├── drawer.tsx
+│   │       ├── dropdown-menu.tsx
+│   │       ├── form.tsx
+│   │       ├── hover-card.tsx
+│   │       ├── input-otp.tsx
+│   │       ├── input.tsx
+│   │       ├── label.tsx
+│   │       ├── menubar.tsx
+│   │       ├── navigation-menu.tsx
+│   │       ├── pagination.tsx
+│   │       ├── popover.tsx
+│   │       ├── progress.tsx
+│   │       ├── radio-group.tsx
+│   │       ├── resizable.tsx
+│   │       ├── scroll-area.tsx
+│   │       ├── select.tsx
+│   │       ├── separator.tsx
+│   │       ├── sheet.tsx
+│   │       ├── sidebar.tsx
+│   │       ├── skeleton.tsx
+│   │       ├── slider.tsx
+│   │       ├── sonner.tsx
+│   │       ├── switch.tsx
+│   │       ├── table.tsx
+│   │       ├── tabs.tsx
+│   │       ├── textarea.tsx
+│   │       ├── toast.tsx
+│   │       ├── toaster.tsx
+│   │       ├── toggle-group.tsx
+│   │       ├── toggle.tsx
+│   │       ├── tooltip.tsx
+│   │       └── use-toast.ts
+│   ├── data
+│   │   └── mockNews.ts
+│   ├── hooks
+│   │   ├── use-mobile.tsx
+│   │   ├── use-toast.ts
+│   │   └── useNews.ts
+│   ├── index.css
+│   ├── integrations
+│   │   └── supabase
+│   │       ├── client.ts
+│   │       └── types.ts
+│   ├── lib
+│   │   └── utils.ts
+│   ├── main.tsx
+│   ├── pages
+│   │   ├── Index.tsx
+│   │   └── NotFound.tsx
+│   ├── types
+│   │   └── news.ts
+│   └── vite-env.d.ts
+├── supabase
+│   ├── config.toml
+│   ├── functions
+│   │   ├── _shared
+│   │   │   └── cron.sql
+│   │   ├── process-rss-feeds
+│   │   │   └── index.ts
+│   │   └── scheduled-rss-update
+│   │       └── index.ts
+│   └── migrations
+│       ├── 001_create_news_tables.sql
+│       ├── 20250721232206-de23c806-bdcf-490c-b1bf-595de6a46a22.sql
+│       ├── 20250721232746-d05bb8c6-bee8-4d83-9a8d-2913021f7cf7.sql
+│       ├── 20250722233757-e522e70e-c04f-4986-8088-b267e7c32c8a.sql
+│       ├── 20250726135619-5442fa17-2bf1-499d-9897-6f3934047d4a.sql
+│       ├── 20250727132930-5d511a33-3e8a-4517-82c3-37526febb6b0.sql
+│       ├── 20250727132959-fcc15e84-5031-4389-91e3-b3c784925e3d.sql
+│       ├── 20250728232316-fb744861-78a4-41a0-81a5-f58a452874dd.sql
+│       ├── 20250902005714_af5bd1f6-8ed1-4031-9ed5-fd0e32bd1ca7.sql
+│       ├── 20250907182445_7b151236-318c-4230-b9c7-c9e704af53ce.sql
+│       ├── 20250909014723_a70c90da-7f75-4dae-b81a-d09fa7d868b9.sql
+│       ├── 20250909015236_51e9d274-28a7-40a8-b15b-e334c9b149b7.sql
+│       └── scraps
+│           ├── 20250726135927-4d8fe306-8861-4927-8ec6-f00dc1e94ba4.sql
+│           ├── 20250727134829-76553bc6-9aad-49f8-af0f-c1805c701a33.sql
+│           ├── 20250727140358-01802f73-51b0-42bb-af49-58b575055003.sql
+│           ├── 20250907182337_c0c0d976-69fc-4b9b-a368-12889e0de3c4.sql
+│           ├── 20250910012059_c54cda62-87d1-47bd-90d1-8da2b3d9a337.sql
+│           └── 20250910012130_94f81f4c-093f-4405-a1d6-4c761dfcc6cc.sql
+├── tailwind.config.ts
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts
+
+19 directories, 115 files

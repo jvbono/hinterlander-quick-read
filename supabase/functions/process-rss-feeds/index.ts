@@ -36,6 +36,27 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Generate unique run ID for this ingestion run
+    const runId = crypto.randomUUID();
+    console.log(`Starting RSS ingestion run: ${runId}`);
+
+    // Helper function to log errors to database
+    async function logError(sourceId: string, errorMessage: string, httpStatus?: number) {
+      try {
+        await supabaseClient
+          .from('feed_errors')
+          .insert({
+            source_id: sourceId,
+            run_id: runId,
+            error_message: errorMessage,
+            http_status: httpStatus
+          });
+        console.log(`Logged error for source ${sourceId}: ${errorMessage}`);
+      } catch (logError) {
+        console.error('Failed to log error to database:', logError);
+      }
+    }
+
     // Fetch active news sources
     const { data: sources, error: sourcesError } = await supabaseClient
       .from('news_sources')
@@ -73,13 +94,34 @@ serve(async (req) => {
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          console.error(`Failed to fetch ${source.name}: ${response.status} ${response.statusText}`)
-          errorCount++
-          continue
+          const errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          console.error(`Failed to fetch ${source.name}: ${errorMessage}`);
+          await logError(source.id, errorMessage, response.status);
+          errorCount++;
+          continue;
         }
 
         const rssText = await response.text()
+        
+        // Validate that we got some content
+        if (!rssText || rssText.trim().length === 0) {
+          const errorMessage = 'Empty response from RSS feed';
+          console.error(`${source.name}: ${errorMessage}`);
+          await logError(source.id, errorMessage);
+          errorCount++;
+          continue;
+        }
+        
         const rssItems = parseRSS(rssText)
+        
+        // Check if we successfully parsed items
+        if (rssItems.length === 0) {
+          const errorMessage = 'No valid RSS items found in feed (possible XML parsing error)';
+          console.error(`${source.name}: ${errorMessage}`);
+          await logError(source.id, errorMessage);
+          errorCount++;
+          continue;
+        }
         
         console.log(`Found ${rssItems.length} items from ${source.name}`)
 
@@ -169,12 +211,22 @@ serve(async (req) => {
           .eq('id', source.id)
 
       } catch (error) {
-        if (error.name === 'AbortError') {
-          console.error(`Timeout processing ${source.name}`)
+        let errorMessage = '';
+        const err = error as any; // Type assertion for error handling
+        
+        if (err.name === 'AbortError') {
+          errorMessage = 'Request timeout (30 seconds)';
+          console.error(`Timeout processing ${source.name}`);
+        } else if (err.message?.includes('HTTP/2')) {
+          errorMessage = `HTTP/2 protocol error: ${err.message}`;
+          console.error(`HTTP/2 error processing ${source.name}:`, error);
         } else {
-          console.error(`Error processing ${source.name}:`, error)
+          errorMessage = `Unexpected error: ${err.message || err.toString()}`;
+          console.error(`Error processing ${source.name}:`, error);
         }
-        errorCount++
+        
+        await logError(source.id, errorMessage);
+        errorCount++;
       }
     }
 
@@ -196,8 +248,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('RSS processing error:', error)
+    const err = error as any; // Type assertion for error handling
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: err.message || 'Unknown error occurred' }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,

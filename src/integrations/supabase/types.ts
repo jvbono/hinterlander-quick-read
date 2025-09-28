@@ -22,6 +22,7 @@ export type Database = {
           id: string
           run_id: string | null
           source_id: string
+          source_name: string | null
           timestamp: string
         }
         Insert: {
@@ -31,6 +32,7 @@ export type Database = {
           id?: string
           run_id?: string | null
           source_id: string
+          source_name?: string | null
           timestamp?: string
         }
         Update: {
@@ -40,6 +42,7 @@ export type Database = {
           id?: string
           run_id?: string | null
           source_id?: string
+          source_name?: string | null
           timestamp?: string
         }
         Relationships: [
@@ -201,6 +204,7 @@ export type Database = {
           last_fetched_at: string | null
           name: string
           rss_feed_url: string
+          tags: string[]
           target_column: string | null
           updated_at: string
           url: string
@@ -213,6 +217,7 @@ export type Database = {
           last_fetched_at?: string | null
           name?: string
           rss_feed_url?: string
+          tags?: string[]
           target_column?: string | null
           updated_at?: string
           url?: string
@@ -225,6 +230,7 @@ export type Database = {
           last_fetched_at?: string | null
           name?: string
           rss_feed_url?: string
+          tags?: string[]
           target_column?: string | null
           updated_at?: string
           url?: string

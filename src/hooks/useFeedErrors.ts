@@ -33,6 +33,7 @@ export function useFeedErrors() {
         .select(`
           id,
           source_id,
+          source_name,
           run_id,
           error_message,
           http_status,
@@ -64,6 +65,7 @@ export function useFeedErrorSummary() {
         .from('feed_errors')
         .select(`
           source_id,
+          source_name,
           error_message,
           timestamp,
           news_sources:source_id (
@@ -83,7 +85,7 @@ export function useFeedErrorSummary() {
 
       data?.forEach((error: any) => {
         const sourceId = error.source_id;
-        const sourceName = error.news_sources?.name || 'Unknown Source';
+        const sourceName = error.news_sources?.name || error.source_name || 'Unknown Source';
         const rssUrl = error.news_sources?.rss_feed_url || '';
 
         if (!errorMap.has(sourceId)) {

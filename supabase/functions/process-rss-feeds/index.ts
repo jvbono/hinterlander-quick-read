@@ -41,12 +41,13 @@ serve(async (req) => {
     console.log(`Starting RSS ingestion run: ${runId}`);
 
     // Helper function to log errors to database
-    async function logError(sourceId: string, errorMessage: string, httpStatus?: number) {
+    async function logError(sourceId: string, sourceName: string, errorMessage: string, httpStatus?: number) {
       try {
         await supabaseClient
           .from('feed_errors')
           .insert({
             source_id: sourceId,
+            source_name: sourceName,
             run_id: runId,
             error_message: errorMessage,
             http_status: httpStatus
@@ -96,7 +97,7 @@ serve(async (req) => {
         if (!response.ok) {
           const errorMessage = `HTTP ${response.status}: ${response.statusText}`;
           console.error(`Failed to fetch ${source.name}: ${errorMessage}`);
-          await logError(source.id, errorMessage, response.status);
+          await logError(source.id, source.name, errorMessage, response.status);
           errorCount++;
           continue;
         }
@@ -107,7 +108,7 @@ serve(async (req) => {
         if (!rssText || rssText.trim().length === 0) {
           const errorMessage = 'Empty response from RSS feed';
           console.error(`${source.name}: ${errorMessage}`);
-          await logError(source.id, errorMessage);
+          await logError(source.id, source.name, errorMessage);
           errorCount++;
           continue;
         }
@@ -118,7 +119,7 @@ serve(async (req) => {
         if (rssItems.length === 0) {
           const errorMessage = 'No valid RSS items found in feed (possible XML parsing error)';
           console.error(`${source.name}: ${errorMessage}`);
-          await logError(source.id, errorMessage);
+          await logError(source.id, source.name, errorMessage);
           errorCount++;
           continue;
         }
@@ -225,7 +226,7 @@ serve(async (req) => {
           console.error(`Error processing ${source.name}:`, error);
         }
         
-        await logError(source.id, errorMessage);
+        await logError(source.id, source.name, errorMessage);
         errorCount++;
       }
     }

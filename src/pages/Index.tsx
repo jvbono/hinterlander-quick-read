@@ -97,7 +97,7 @@ const Index = () => {
     );
     
     const opinion = filteredData.filter(item => 
-      item.target_column === 'opinion'
+      item.target_column === 'commentary'
     );
     
     const currents = filteredData.filter(item => 

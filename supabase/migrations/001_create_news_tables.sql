@@ -38,7 +38,7 @@ CREATE INDEX idx_news_sources_active ON news_sources(is_active);
 
 -- Insert Canadian news sources
 INSERT INTO news_sources (name, type, rss_url, tags) VALUES
-('CBC News', 'mainstream', 'https://www.cbc.ca/webfeed/rss/rss-canada', ARRAY['national', 'general']),
+('CBC News', 'mainstream', 'https://www.cbc.ca/cmlink/rss-topstories', ARRAY['national', 'general']),
 ('Globe and Mail', 'mainstream', 'https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/', ARRAY['national', 'business']),
 ('CTV News', 'mainstream', 'https://www.ctvnews.ca/rss/ctvnews-ca-top-stories-public-rss-1.822009', ARRAY['national', 'general']),
 ('National Post', 'mainstream', 'https://nationalpost.com/feed/', ARRAY['national', 'culture', 'politics']),

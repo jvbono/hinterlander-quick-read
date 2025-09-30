@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      feed_errors: {
+        Row: {
+          created_at: string
+          error_message: string
+          http_status: number | null
+          id: string
+          run_id: string | null
+          source_id: string
+          source_name: string | null
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          error_message: string
+          http_status?: number | null
+          id?: string
+          run_id?: string | null
+          source_id: string
+          source_name?: string | null
+          timestamp?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string
+          http_status?: number | null
+          id?: string
+          run_id?: string | null
+          source_id?: string
+          source_name?: string | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_errors_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "news_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       link_sources: {
         Row: {
           category: string
@@ -163,6 +204,7 @@ export type Database = {
           last_fetched_at: string | null
           name: string
           rss_feed_url: string
+          tags: string[]
           target_column: string | null
           updated_at: string
           url: string
@@ -173,11 +215,12 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_fetched_at?: string | null
-          name: string
-          rss_feed_url: string
+          name?: string
+          rss_feed_url?: string
+          tags?: string[]
           target_column?: string | null
           updated_at?: string
-          url: string
+          url?: string
         }
         Update: {
           category?: string
@@ -187,6 +230,7 @@ export type Database = {
           last_fetched_at?: string | null
           name?: string
           rss_feed_url?: string
+          tags?: string[]
           target_column?: string | null
           updated_at?: string
           url?: string

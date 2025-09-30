@@ -32,8 +32,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Scheduled RSS update error:', error)
+    const err = error as any; // Type assertion for error handling
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: err.message || 'Unknown error occurred' }),
       {
         headers: { 'Content-Type': 'application/json' },
         status: 500,

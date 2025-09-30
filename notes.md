@@ -17,7 +17,15 @@
 [X]figure out why supabase isn't getting articles from all rss feeds: test via cbc 
     possibly resolved: process rss function in supabase pulls from news_sources. CBC and TorStar rss links were incorrect. Fixed those. Should start seeing results
 
+[] Fix rate limits
+
+[] Ensure articles on frontend fed to proper categories 
+
+[](figure out how frontend shows articles: i.e. why so many glob and mail)
+
 [] need to go through news_sources table in supabase and verify rss links are correct. Can edit cells in the table by clicking
+
+[] find feed ordering in supabase and on frontend
 
 [] fix classifications or articles (region and type)
 

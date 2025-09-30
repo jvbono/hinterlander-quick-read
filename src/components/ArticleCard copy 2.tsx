@@ -6,21 +6,29 @@ interface ArticleCardProps {
 }
 
 const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
-  // Format as relative time (e.g. 5m ago, 2h ago, 3d ago)
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
     
-    if (diffInMinutes < 1) {
-      return 'just now';
-    } else if (diffInMinutes < 60) {
+    if (diffInMinutes < 60) {
       return `${diffInMinutes}m ago`;
     } else if (diffInMinutes < 1440) {
       return `${Math.floor(diffInMinutes / 60)}h ago`;
     } else {
       return `${Math.floor(diffInMinutes / 1440)}d ago`;
     }
+  };
+
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   return (
@@ -30,7 +38,7 @@ const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
         <span className="font-medium">{article.source_name}</span>
         <span>•</span>
         <time>
-          Published: {formatTime(article.published_at)}
+          Published: {formatDateTime(article.published_at)}
         </time>
       </div>
       
@@ -63,4 +71,4 @@ const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
   );
 };
 
-export default ArticleCard
+export default ArticleCard;

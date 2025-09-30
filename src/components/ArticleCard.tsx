@@ -30,7 +30,7 @@ const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
         <span className="font-medium">{article.source_name}</span>
         <span>•</span>
         <time>
-          Published: {formatTime(article.published_at)}
+          {formatTime(article.published_at)}
         </time>
       </div>
       

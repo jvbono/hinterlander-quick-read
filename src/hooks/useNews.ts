@@ -36,8 +36,7 @@ export const useLinks = (targetColumn?: string) => {
           )
         `)
         .order('published_at', { ascending: false })
-        //.limit(200);
-        
+        .limit(150);
 
       if (targetColumn && targetColumn !== 'all') {
         query = query.eq('link_sources.news_sources.target_column', targetColumn);

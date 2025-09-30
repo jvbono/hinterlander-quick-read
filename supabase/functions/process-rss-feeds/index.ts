@@ -1,7 +1,6 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { XMLParser } from "https://deno.land/x/xml@2.0.4/mod.ts";
 
 interface RSSItem {
   title: string;
@@ -261,114 +260,39 @@ serve(async (req) => {
   }
 })
 
-// function parseRSS(xmlText: string): RSSItem[] {
-//   const items: RSSItem[] = []
+function parseRSS(xmlText: string): RSSItem[] {
+  const items: RSSItem[] = []
   
-//   // Simple regex-based RSS parsing
-//   const itemRegex = /<item[^>]*>([\s\S]*?)<\/item>/gi
-//   const titleRegex = /<title[^>]*><!\[CDATA\[(.*?)\]\]><\/title>|<title[^>]*>(.*?)<\/title>/i
-//   const linkRegex = /<link[^>]*>(.*?)<\/link>/i
-//   const descRegex = /<description[^>]*><!\[CDATA\[(.*?)\]\]><\/description>|<description[^>]*>(.*?)<\/description>/i
-//   const pubDateRegex = /<pubDate[^>]*>(.*?)<\/pubDate>/i
-//   const guidRegex = /<guid[^>]*>(.*?)<\/guid>/i
+  // Simple regex-based RSS parsing
+  const itemRegex = /<item[^>]*>([\s\S]*?)<\/item>/gi
+  const titleRegex = /<title[^>]*><!\[CDATA\[(.*?)\]\]><\/title>|<title[^>]*>(.*?)<\/title>/i
+  const linkRegex = /<link[^>]*>(.*?)<\/link>/i
+  const descRegex = /<description[^>]*><!\[CDATA\[(.*?)\]\]><\/description>|<description[^>]*>(.*?)<\/description>/i
+  const pubDateRegex = /<pubDate[^>]*>(.*?)<\/pubDate>/i
+  const guidRegex = /<guid[^>]*>(.*?)<\/guid>/i
 
-//   let match
-//   while ((match = itemRegex.exec(xmlText)) !== null) {
-//     const itemXml = match[1]
+  let match
+  while ((match = itemRegex.exec(xmlText)) !== null) {
+    const itemXml = match[1]
     
-//     const titleMatch = titleRegex.exec(itemXml)
-//     const linkMatch = linkRegex.exec(itemXml)
-//     const descMatch = descRegex.exec(itemXml)
-//     const pubDateMatch = pubDateRegex.exec(itemXml)
-//     const guidMatch = guidRegex.exec(itemXml)
+    const titleMatch = titleRegex.exec(itemXml)
+    const linkMatch = linkRegex.exec(itemXml)
+    const descMatch = descRegex.exec(itemXml)
+    const pubDateMatch = pubDateRegex.exec(itemXml)
+    const guidMatch = guidRegex.exec(itemXml)
 
-//     if (titleMatch && linkMatch) {
-//       items.push({
-//         title: titleMatch[1] || titleMatch[2] || '',
-//         link: linkMatch[1] || '',
-//         description: descMatch ? (descMatch[1] || descMatch[2] || '') : '',
-//         pubDate: pubDateMatch ? pubDateMatch[1] : '',
-//         guid: guidMatch ? guidMatch[1] : undefined
-//       })
-//     }
-//   }
-
-//   return items
-// }
-
-/**
- * Parse RSS or Atom XML into a normalized array of items.
- * Handles common RSS 2.0 and Atom feed structures.
- * Provides error handling so malformed XML won’t crash the ingestion loop.
- */
-function parseRSS(xmlText: string) {
-  try {
-    // Initialize parser with sane defaults
-    const parser = new XMLParser({
-      ignoreAttributes: false,
-      attributeNamePrefix: "@_",
-      parseTagValue: true,
-      trimValues: true
-    });
-
-    const doc = parser.parse(xmlText);
-    const items: Array<{
-      title: string;
-      link: string;
-      description: string;
-      pubDate: string;
-      guid?: string;
-    }> = [];
-
-    // --- Handle RSS 2.0 feeds ---
-    if (doc.rss?.channel?.item) {
-      const feedItems = Array.isArray(doc.rss.channel.item)
-        ? doc.rss.channel.item
-        : [doc.rss.channel.item];
-
-      for (const item of feedItems) {
-        items.push({
-          title: item.title ?? "",
-          link: item.link ?? "",
-          description: item.description
-            ?? item["content:encoded"]
-            ?? item["itunes:summary"]
-            ?? "",
-          pubDate: item.pubDate ?? "",
-          guid: item.guid ?? ""
-        });
-      }
+    if (titleMatch && linkMatch) {
+      items.push({
+        title: titleMatch[1] || titleMatch[2] || '',
+        link: linkMatch[1] || '',
+        description: descMatch ? (descMatch[1] || descMatch[2] || '') : '',
+        pubDate: pubDateMatch ? pubDateMatch[1] : '',
+        guid: guidMatch ? guidMatch[1] : undefined
+      })
     }
-
-    // --- Handle Atom feeds (<feed><entry>) ---
-    if (doc.feed?.entry) {
-      const entries = Array.isArray(doc.feed.entry)
-        ? doc.feed.entry
-        : [doc.feed.entry];
-
-      for (const entry of entries) {
-        items.push({
-          title: entry.title ?? "",
-          // Atom feeds often have <link href="...">
-          link: entry.link?.["@_href"] ?? entry.link ?? "",
-          description: entry.summary ?? entry.content ?? "",
-          pubDate: entry.updated ?? entry.published ?? "",
-          guid: entry.id ?? ""
-        });
-      }
-    }
-
-    // Warn if nothing was parsed
-    if (items.length === 0) {
-      console.warn("parseRSS: No <item> or <entry> elements found in feed");
-    }
-
-    return items;
-  } catch (err) {
-    // Catch parsing errors and log them
-    console.error("parseRSS: XML parsing failed", err);
-    return []; // Return empty so caller can handle gracefully
   }
+
+  return items
 }
 
 function cleanText(text: string): string {

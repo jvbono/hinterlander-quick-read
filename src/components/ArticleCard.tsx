@@ -6,15 +6,12 @@ interface ArticleCardProps {
 }
 
 const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
-  // Format as relative time (e.g. 5m ago, 2h ago, 3d ago)
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
     
-    if (diffInMinutes < 1) {
-      return 'just now';
-    } else if (diffInMinutes < 60) {
+    if (diffInMinutes < 60) {
       return `${diffInMinutes}m ago`;
     } else if (diffInMinutes < 1440) {
       return `${Math.floor(diffInMinutes / 60)}h ago`;
@@ -29,9 +26,7 @@ const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
         <span className={`inline-block w-1.5 h-1.5 rounded-full ${accentColor}`}></span>
         <span className="font-medium">{article.source_name}</span>
         <span>•</span>
-        <time>
-          Published: {formatTime(article.published_at)}
-        </time>
+        <time>{formatTime(article.published_at)}</time>
       </div>
       
       <h3 className="text-base font-medium text-foreground mb-2 leading-snug group-hover:text-primary transition-colors">
@@ -63,4 +58,4 @@ const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
   );
 };
 
-export default ArticleCard
+export default ArticleCard;

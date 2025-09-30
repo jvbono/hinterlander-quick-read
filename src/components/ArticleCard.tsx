@@ -29,9 +29,7 @@ const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
         <span className={`inline-block w-1.5 h-1.5 rounded-full ${accentColor}`}></span>
         <span className="font-medium">{article.source_name}</span>
         <span>•</span>
-        <time>
-          {formatTime(article.published_at)}
-        </time>
+        <time>{formatTime(article.published_at)}</time>
       </div>
       
       <h3 className="text-base font-medium text-foreground mb-2 leading-snug group-hover:text-primary transition-colors">

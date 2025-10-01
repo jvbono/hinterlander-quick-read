@@ -1,6 +1,6 @@
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { XMLParser } from 'https://esm.sh/fast-xml-parser@4.3.2'
 
 interface RSSItem {
   title: string;
@@ -263,35 +263,107 @@ serve(async (req) => {
 function parseRSS(xmlText: string): RSSItem[] {
   const items: RSSItem[] = []
   
-  // Simple regex-based RSS parsing
-  const itemRegex = /<item[^>]*>([\s\S]*?)<\/item>/gi
-  const titleRegex = /<title[^>]*><!\[CDATA\[(.*?)\]\]><\/title>|<title[^>]*>(.*?)<\/title>/i
-  const linkRegex = /<link[^>]*>(.*?)<\/link>/i
-  const descRegex = /<description[^>]*><!\[CDATA\[(.*?)\]\]><\/description>|<description[^>]*>(.*?)<\/description>/i
-  const pubDateRegex = /<pubDate[^>]*>(.*?)<\/pubDate>/i
-  const guidRegex = /<guid[^>]*>(.*?)<\/guid>/i
-
-  let match
-  while ((match = itemRegex.exec(xmlText)) !== null) {
-    const itemXml = match[1]
+  try {
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      attributeNamePrefix: '@_',
+      textNodeName: '#text',
+      ignoreDeclaration: true,
+      parseAttributeValue: false,
+      trimValues: true,
+      cdataPropName: '__cdata'
+    })
     
-    const titleMatch = titleRegex.exec(itemXml)
-    const linkMatch = linkRegex.exec(itemXml)
-    const descMatch = descRegex.exec(itemXml)
-    const pubDateMatch = pubDateRegex.exec(itemXml)
-    const guidMatch = guidRegex.exec(itemXml)
-
-    if (titleMatch && linkMatch) {
-      items.push({
-        title: titleMatch[1] || titleMatch[2] || '',
-        link: linkMatch[1] || '',
-        description: descMatch ? (descMatch[1] || descMatch[2] || '') : '',
-        pubDate: pubDateMatch ? pubDateMatch[1] : '',
-        guid: guidMatch ? guidMatch[1] : undefined
-      })
+    const parsed = parser.parse(xmlText)
+    
+    // Handle RSS 2.0 format
+    if (parsed.rss && parsed.rss.channel && parsed.rss.channel.item) {
+      const rssItems = Array.isArray(parsed.rss.channel.item) 
+        ? parsed.rss.channel.item 
+        : [parsed.rss.channel.item]
+      
+      for (const item of rssItems) {
+        // Extract title (handle CDATA)
+        const title = item.title?.__cdata || item.title?.['#text'] || item.title || ''
+        
+        // Extract link
+        const link = item.link?.__cdata || item.link?.['#text'] || item.link || ''
+        
+        // Extract description (handle CDATA)
+        const description = item.description?.__cdata || item.description?.['#text'] || item.description || ''
+        
+        // Extract pubDate
+        const pubDate = item.pubDate?.__cdata || item.pubDate?.['#text'] || item.pubDate || ''
+        
+        // Extract guid
+        const guid = item.guid?.__cdata || item.guid?.['#text'] || item.guid || undefined
+        
+        // Extract category
+        const category = item.category?.__cdata || item.category?.['#text'] || item.category || undefined
+        
+        if (title && link) {
+          items.push({
+            title,
+            link,
+            description,
+            pubDate,
+            guid,
+            category
+          })
+        }
+      }
     }
+    
+    // Handle Atom format
+    else if (parsed.feed && parsed.feed.entry) {
+      const atomEntries = Array.isArray(parsed.feed.entry) 
+        ? parsed.feed.entry 
+        : [parsed.feed.entry]
+      
+      for (const entry of atomEntries) {
+        // Extract title
+        const title = entry.title?.__cdata || entry.title?.['#text'] || entry.title || ''
+        
+        // Extract link (Atom uses link element with href attribute)
+        let link = ''
+        if (entry.link) {
+          if (Array.isArray(entry.link)) {
+            const htmlLink = entry.link.find((l: any) => l['@_type'] === 'text/html' || l['@_rel'] === 'alternate')
+            link = htmlLink?.['@_href'] || entry.link[0]?.['@_href'] || ''
+          } else {
+            link = entry.link?.['@_href'] || entry.link?.['#text'] || entry.link || ''
+          }
+        }
+        
+        // Extract description (summary or content in Atom)
+        const description = entry.summary?.__cdata || entry.summary?.['#text'] || entry.summary || 
+                          entry.content?.__cdata || entry.content?.['#text'] || entry.content || ''
+        
+        // Extract pubDate (published or updated in Atom)
+        const pubDate = entry.published || entry.updated || ''
+        
+        // Extract guid (id in Atom)
+        const guid = entry.id || undefined
+        
+        // Extract category
+        const category = entry.category?.['@_term'] || entry.category?.['#text'] || entry.category || undefined
+        
+        if (title && link) {
+          items.push({
+            title,
+            link,
+            description,
+            pubDate,
+            guid,
+            category
+          })
+        }
+      }
+    }
+  } catch (error) {
+    console.error('XML parsing error:', error)
   }
-
+  
   return items
 }
 

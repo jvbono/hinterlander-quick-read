@@ -117,26 +117,16 @@ const Index = () => {
   const handleRefreshNews = async () => {
     setIsRefreshing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('process-rss-feeds');
-      
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to refresh news feeds",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Success", 
-          description: "News feeds refreshed successfully",
-        });
-        // Refetch the news data
-        await refetch();
-      }
+      // Just reload data from database - RSS feeds update automatically every 30 minutes
+      await refetch();
+      toast({
+        title: "Refreshed", 
+        description: "Latest stories loaded from database",
+      });
     } catch (err) {
       toast({
         title: "Error",
-        description: "Failed to refresh news feeds",
+        description: "Failed to reload news",
         variant: "destructive",
       });
     } finally {

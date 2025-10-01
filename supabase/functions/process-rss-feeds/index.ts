@@ -75,7 +75,8 @@ serve(async (req) => {
     let successCount = 0;
     let errorCount = 0;
 
-    for (const source of sources as NewsSource[]) {
+    // Process all feeds in parallel for much faster execution
+    const processingPromises = (sources as NewsSource[]).map(async (source) => {
       try {
         console.log(`Processing RSS feed: ${source.name}`)
         
@@ -98,8 +99,7 @@ serve(async (req) => {
           const errorMessage = `HTTP ${response.status}: ${response.statusText}`;
           console.error(`Failed to fetch ${source.name}: ${errorMessage}`);
           await logError(source.id, source.name, errorMessage, response.status);
-          errorCount++;
-          continue;
+          return { success: false, processed: 0, newItems: 0 };
         }
 
         const rssText = await response.text()
@@ -109,8 +109,7 @@ serve(async (req) => {
           const errorMessage = 'Empty response from RSS feed';
           console.error(`${source.name}: ${errorMessage}`);
           await logError(source.id, source.name, errorMessage);
-          errorCount++;
-          continue;
+          return { success: false, processed: 0, newItems: 0 };
         }
         
         const rssItems = parseRSS(rssText)
@@ -120,11 +119,12 @@ serve(async (req) => {
           const errorMessage = 'No valid RSS items found in feed (possible XML parsing error)';
           console.error(`${source.name}: ${errorMessage}`);
           await logError(source.id, source.name, errorMessage);
-          errorCount++;
-          continue;
+          return { success: false, processed: 0, newItems: 0 };
         }
         
         console.log(`Found ${rssItems.length} items from ${source.name}`)
+
+        let sourceNewItems = 0;
 
         // Process each RSS item with deduplication
         for (const item of rssItems) {
@@ -180,7 +180,7 @@ serve(async (req) => {
             }
             
             linkId = newLink.id
-            totalNew++
+            sourceNewItems++
           }
           
           // Now handle the link_sources relationship
@@ -202,14 +202,13 @@ serve(async (req) => {
           }
         }
 
-        totalProcessed += rssItems.length
-        successCount++
-
         // Update last fetched timestamp
         await supabaseClient
           .from('news_sources')
           .update({ last_fetched_at: new Date().toISOString() })
           .eq('id', source.id)
+
+        return { success: true, processed: rssItems.length, newItems: sourceNewItems };
 
       } catch (error) {
         let errorMessage = '';
@@ -227,9 +226,29 @@ serve(async (req) => {
         }
         
         await logError(source.id, source.name, errorMessage);
-        errorCount++;
+        return { success: false, processed: 0, newItems: 0 };
       }
-    }
+    })
+
+    // Wait for all feeds to process in parallel
+    const results = await Promise.allSettled(processingPromises);
+    
+    // Aggregate results
+    results.forEach((result) => {
+      if (result.status === 'fulfilled') {
+        const { success, processed, newItems } = result.value;
+        if (success) {
+          successCount++;
+          totalProcessed += processed;
+          totalNew += newItems;
+        } else {
+          errorCount++;
+        }
+      } else {
+        errorCount++;
+        console.error('Promise rejected:', result.reason);
+      }
+    })
 
     console.log(`RSS Processing complete: ${successCount} successful, ${errorCount} failed`)
 

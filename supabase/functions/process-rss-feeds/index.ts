@@ -388,8 +388,18 @@ function parseRSS(xmlText: string): RSSItem[] {
 
 function cleanText(text: any): string {
   if (!text) return ''
-  // Convert to string if it's not already
-  const str = typeof text === 'string' ? text : String(text)
+  
+  // Handle different types of input
+  let str = ''
+  if (typeof text === 'string') {
+    str = text
+  } else if (typeof text === 'object') {
+    // Try common RSS feed object properties
+    str = text.content || text._ || text['#text'] || JSON.stringify(text)
+  } else {
+    str = String(text)
+  }
+  
   return str
     .replace(/<[^>]*>/g, '') // Remove HTML tags
     .replace(/&[^;]+;/g, '') // Remove HTML entities (simplified)

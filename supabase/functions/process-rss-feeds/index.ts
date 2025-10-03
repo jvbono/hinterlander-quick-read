@@ -386,9 +386,11 @@ function parseRSS(xmlText: string): RSSItem[] {
   return items
 }
 
-function cleanText(text: string): string {
+function cleanText(text: any): string {
   if (!text) return ''
-  return text
+  // Convert to string if it's not already
+  const str = typeof text === 'string' ? text : String(text)
+  return str
     .replace(/<[^>]*>/g, '') // Remove HTML tags
     .replace(/&[^;]+;/g, '') // Remove HTML entities (simplified)
     .trim()
@@ -407,8 +409,8 @@ function parseDate(dateString: string): string {
 }
 
 function categorizeNews(item: RSSItem, source: NewsSource): string {
-  const title = item.title.toLowerCase()
-  const description = item.description.toLowerCase()
+  const title = (item.title || '').toLowerCase()
+  const description = (item.description || '').toLowerCase()
   const text = `${title} ${description}`
 
   // Rural/Agriculture keywords

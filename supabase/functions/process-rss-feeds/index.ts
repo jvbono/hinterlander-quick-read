@@ -435,8 +435,8 @@ function parseDate(dateString: string): string {
 }
 
 function categorizeNews(item: RSSItem, source: NewsSource): string {
-  const title = (item.title || '').toLowerCase()
-  const description = (item.description || '').toLowerCase()
+  const title = cleanText(item.title).toLowerCase()
+  const description = cleanText(item.description).toLowerCase()
   const text = `${title} ${description}`
 
   // Rural/Agriculture keywords

@@ -23,8 +23,6 @@
 
 [] Ensure articles on frontend fed to proper categories 
 
-[] keyword based search function
-
 [](figure out how frontend shows articles: i.e. why so many glob and mail)
 
 [] need to go through news_sources table in supabase and verify rss links are correct. Can edit cells in the table by clicking
@@ -43,8 +41,14 @@
 
 [] Look into RSS formatting re CBC type error - might be fixed by adding/amending some of our types
 
+# Features
 
-JULIAN NOTES
+[] keyword based search function
+
+[] French, English, All toggle
+
+
+# JULIAN NOTES
 
 // I learned how to add feeds to the database. easiest to use the SQL editor to add net new feeds. to edit feeds already in the database, it's easiest to directly edit the database itself. 
 

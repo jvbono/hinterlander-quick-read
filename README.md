@@ -23,6 +23,8 @@
 
 [] Ensure articles on frontend fed to proper categories 
 
+[] keyword based search function
+
 [](figure out how frontend shows articles: i.e. why so many glob and mail)
 
 [] need to go through news_sources table in supabase and verify rss links are correct. Can edit cells in the table by clicking

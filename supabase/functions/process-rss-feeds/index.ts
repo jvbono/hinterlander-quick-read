@@ -68,15 +68,23 @@ serve(async (req) => {
       throw new Error(`Failed to fetch sources: ${sourcesError.message}`)
     }
 
-    console.log(`Processing ${sources.length} news sources`)
+    console.log(`Processing ${sources.length} news sources in batches`)
 
     let totalProcessed = 0;
     let totalNew = 0;
     let successCount = 0;
     let errorCount = 0;
 
-    // Process all feeds in parallel for much faster execution
-    const processingPromises = (sources as NewsSource[]).map(async (source) => {
+    // Process sources in batches to avoid CPU timeout
+    const BATCH_SIZE = 20;
+    const allResults: Array<{ success: boolean; processed: number; newItems: number }> = [];
+
+    for (let i = 0; i < sources.length; i += BATCH_SIZE) {
+      const batch = sources.slice(i, i + BATCH_SIZE);
+      console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(sources.length / BATCH_SIZE)} (${batch.length} sources)`);
+
+      // Process this batch in parallel
+      const batchPromises = batch.map(async (source) => {
       try {
         console.log(`Processing RSS feed: ${source.name}`)
         
@@ -228,25 +236,33 @@ serve(async (req) => {
         await logError(source.id, source.name, errorMessage);
         return { success: false, processed: 0, newItems: 0 };
       }
-    })
+    });
 
-    // Wait for all feeds to process in parallel
-    const results = await Promise.allSettled(processingPromises);
-    
-    // Aggregate results
-    results.forEach((result) => {
-      if (result.status === 'fulfilled') {
-        const { success, processed, newItems } = result.value;
-        if (success) {
-          successCount++;
-          totalProcessed += processed;
-          totalNew += newItems;
+      // Wait for this batch to complete
+      const batchResults = await Promise.allSettled(batchPromises);
+      
+      // Aggregate batch results
+      batchResults.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          allResults.push(result.value);
         } else {
-          errorCount++;
+          allResults.push({ success: false, processed: 0, newItems: 0 });
+          console.error('Promise rejected:', result.reason);
         }
+      });
+
+      console.log(`Batch ${Math.floor(i / BATCH_SIZE) + 1} complete`);
+    }
+    
+    // Aggregate all results
+    allResults.forEach((result) => {
+      const { success, processed, newItems } = result;
+      if (success) {
+        successCount++;
+        totalProcessed += processed;
+        totalNew += newItems;
       } else {
         errorCount++;
-        console.error('Promise rejected:', result.reason);
       }
     })
 

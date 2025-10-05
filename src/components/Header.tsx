@@ -33,8 +33,7 @@ const Header = ({ onRefresh, isRefreshing, activeFilter, onFilterChange, selecte
             <img 
               src={logoImage} 
               alt="The Hinterlander" 
-              className="h-8 md:h-10 w-auto object-contain"
-              style={{ filter: 'brightness(0) saturate(100%)' }}
+              className="h-6 md:h-8 w-auto object-contain"
             />
             <div>
               <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">The Hinterlander</h1>

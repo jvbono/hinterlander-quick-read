@@ -47,10 +47,10 @@ const ColumnSection = ({ title, description, icon, articles, accentColor }: Colu
 
   return (
     <div className="flex flex-col">
-      <div className="mb-6 pb-4 border-b border-border/50">
+      <div className="mb-6 pb-4 border-b-2 border-foreground/80">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-lg">{icon}</span>
-          <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+          <h2 className="text-2xl font-bold text-foreground tracking-tight">{title}</h2>
         </div>
         <p className="text-sm text-muted-foreground italic leading-relaxed">
           {description}

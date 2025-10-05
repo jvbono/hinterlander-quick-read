@@ -1,4 +1,3 @@
-
 import { ChevronDown, X } from 'lucide-react';
 import {
   DropdownMenu,
@@ -6,6 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import logoImage from '@/assets/hinterlander-logo.jpg';
 
 interface HeaderProps {
   onRefresh: () => void;
@@ -29,15 +29,25 @@ const Header = ({ onRefresh, isRefreshing, activeFilter, onFilterChange, selecte
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-foreground">The Hinterlander</h1>
-            <p className="text-xs text-muted-foreground">One page, fewer solitudes.</p>
+          <div className="flex items-center gap-3">
+            <img 
+              src={logoImage} 
+              alt="The Hinterlander" 
+              className="h-8 md:h-10 w-auto object-contain"
+              style={{ filter: 'brightness(0) saturate(100%)' }}
+            />
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">The Hinterlander</h1>
+              <p className="text-xs text-muted-foreground">One page, fewer solitudes.</p>
+            </div>
+          </div>
+          <div className="hidden md:block">
             {selectedProvince && (
-              <p className="text-xs text-primary mt-1">Showing stories from {selectedProvince}</p>
+              <p className="text-xs text-primary">Showing stories from {selectedProvince}</p>
             )}
           </div>
           
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 md:gap-6">
             <div className="flex items-center gap-3">
               {filters.map((filter) => (
                 <button

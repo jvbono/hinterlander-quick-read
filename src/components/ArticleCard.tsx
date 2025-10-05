@@ -29,7 +29,7 @@ const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
         <time>{formatTime(article.published_at)}</time>
       </div>
       
-      <h3 className="text-base font-medium text-foreground mb-2 leading-snug group-hover:text-primary transition-colors">
+      <h3 className="text-base font-semibold text-foreground mb-2 leading-snug group-hover:text-primary transition-colors">
         <a 
           href={article.canonical_url} 
           target="_blank" 

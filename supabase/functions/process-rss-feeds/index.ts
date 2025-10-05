@@ -88,20 +88,50 @@ serve(async (req) => {
       try {
         console.log(`Processing RSS feed: ${source.name}`)
         
-        // Add timeout and better headers
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        // Fetch with retry logic for HTTP/2 issues
+        let response: Response | null = null;
+        let lastError: any = null;
+        const maxRetries = 2;
         
-        const response = await fetch(source.rss_feed_url, {
-          signal: controller.signal,
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0; +https://hinterlander.ca)',
-            'Accept': 'application/rss+xml, application/xml, text/xml',
-            'Cache-Control': 'no-cache'
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+            
+            response = await fetch(source.rss_feed_url, {
+              signal: controller.signal,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/rss+xml, application/xml, text/xml, application/atom+xml, */*',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept-Encoding': 'gzip, deflate',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive'
+              }
+            });
+            
+            clearTimeout(timeoutId);
+            break; // Success, exit retry loop
+            
+          } catch (fetchError: any) {
+            lastError = fetchError;
+            console.log(`Fetch attempt ${attempt + 1} failed for ${source.name}:`, fetchError.message);
+            
+            // If this isn't the last retry and it's an HTTP/2 error, try again
+            if (attempt < maxRetries && fetchError.message?.includes('http2')) {
+              console.log(`Retrying ${source.name} due to HTTP/2 error...`);
+              await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1))); // Exponential backoff
+              continue;
+            }
+            
+            // Otherwise, throw the error
+            throw fetchError;
           }
-        })
-
-        clearTimeout(timeoutId);
+        }
+        
+        if (!response) {
+          throw lastError || new Error('Failed to fetch after retries');
+        }
 
         if (!response.ok) {
           const errorMessage = `HTTP ${response.status}: ${response.statusText}`;

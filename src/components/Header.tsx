@@ -29,11 +29,11 @@ const Header = ({ onRefresh, isRefreshing, activeFilter, onFilterChange, selecte
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-start gap-1">
             <img 
               src={hinterlanderLogo} 
               alt="The Hinterlander" 
-              className="h-12 md:h-16 w-auto object-contain"
+              className="h-18 md:h-24 w-auto object-contain"
             />
             <p className="text-xs text-muted-foreground">One page, fewer solitudes.</p>
           </div>

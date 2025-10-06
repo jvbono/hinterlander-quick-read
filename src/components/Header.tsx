@@ -5,7 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import newspaperIcon from '@/assets/newspaper-icon.png';
+import hinterlanderLogo from '@/assets/hinterlander-logo.png';
 
 interface HeaderProps {
   onRefresh: () => void;
@@ -31,14 +31,11 @@ const Header = ({ onRefresh, isRefreshing, activeFilter, onFilterChange, selecte
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img 
-              src={newspaperIcon} 
+              src={hinterlanderLogo} 
               alt="The Hinterlander" 
-              className="h-6 md:h-8 w-auto object-contain"
+              className="h-12 md:h-16 w-auto object-contain"
             />
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">The Hinterlander</h1>
-              <p className="text-xs text-muted-foreground">One page, fewer solitudes.</p>
-            </div>
+            <p className="text-xs text-muted-foreground">One page, fewer solitudes.</p>
           </div>
           <div className="hidden md:block">
             {selectedProvince && (

@@ -30,19 +30,7 @@ export function useFeedErrors() {
     queryFn: async (): Promise<FeedError[]> => {
       const { data, error } = await supabase
         .from('feed_errors')
-        .select(`
-          id,
-          source_id,
-          source_name,
-          run_id,
-          error_message,
-          http_status,
-          timestamp,
-          news_sources:source_id (
-            name,
-            rss_feed_url
-          )
-        `)
+        .select('*')
         .order('timestamp', { ascending: false })
         .limit(200);
 
@@ -50,7 +38,13 @@ export function useFeedErrors() {
         throw error;
       }
 
-      return data || [];
+      return (data || []).map(item => ({
+        ...item,
+        news_sources: {
+          name: item.source_name || 'Unknown',
+          rss_feed_url: ''
+        }
+      })) as FeedError[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 30 * 1000, // 30 seconds
@@ -63,16 +57,7 @@ export function useFeedErrorSummary() {
     queryFn: async (): Promise<FeedErrorSummary[]> => {
       const { data, error } = await supabase
         .from('feed_errors')
-        .select(`
-          source_id,
-          source_name,
-          error_message,
-          timestamp,
-          news_sources:source_id (
-            name,
-            rss_feed_url
-          )
-        `)
+        .select('*')
         .order('timestamp', { ascending: false })
         .limit(500);
 
@@ -85,8 +70,8 @@ export function useFeedErrorSummary() {
 
       data?.forEach((error: any) => {
         const sourceId = error.source_id;
-        const sourceName = error.news_sources?.name || error.source_name || 'Unknown Source';
-        const rssUrl = error.news_sources?.rss_feed_url || '';
+        const sourceName = error.source_name || 'Unknown Source';
+        const rssUrl = '';
 
         if (!errorMap.has(sourceId)) {
           errorMap.set(sourceId, {
@@ -102,7 +87,10 @@ export function useFeedErrorSummary() {
 
         const summary = errorMap.get(sourceId)!;
         summary.total_errors++;
-        summary.recent_errors.push(error);
+        summary.recent_errors.push({
+          ...error,
+          news_sources: { name: sourceName, rss_feed_url: '' }
+        });
 
         // Keep only the 10 most recent errors per source
         if (summary.recent_errors.length > 10) {

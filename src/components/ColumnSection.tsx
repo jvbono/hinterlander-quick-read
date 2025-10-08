@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Link } from '../types/news';
+import { Article } from '../types/news';
 import ArticleCard from './ArticleCard';
 
 interface ColumnSectionProps {
   title: string;
   description: string;
   icon: string;
-  articles: Link[];
+  articles: Article[];
   accentColor: string;
 }
 

@@ -1,7 +1,7 @@
-import { Link } from '../types/news';
+import { Article } from '@/types/news';
 
 interface ArticleCardProps {
-  article: Link;
+  article: Article;
   accentColor: string;
 }
 
@@ -24,7 +24,7 @@ const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
     <article className="group pb-4 mb-4 border-b border-border/30 last:border-b-0">
       <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
         <span className={`inline-block w-1.5 h-1.5 rounded-full ${accentColor}`}></span>
-        <span className="font-medium">{article.source_name}</span>
+        <span className="font-medium">{article.url_domain}</span>
         <span>•</span>
         <time>{formatTime(article.published_at)}</time>
       </div>
@@ -40,10 +40,23 @@ const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
         </a>
       </h3>
       
-      {article.summary && (
+      {article.description && (
         <p className="text-sm text-muted-foreground mb-3 leading-relaxed line-clamp-2">
-          {article.summary}
+          {article.description}
         </p>
+      )}
+      
+      {article.regions.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1">
+          {article.regions.map((region) => (
+            <span 
+              key={region}
+              className="inline-block px-2 py-0.5 text-xs rounded-full bg-secondary/50 text-secondary-foreground"
+            >
+              {region}
+            </span>
+          ))}
+        </div>
       )}
       
       <a 

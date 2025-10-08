@@ -1,12 +1,12 @@
 
 import { useState, useMemo } from 'react';
+import { useArticles } from '../hooks/useArticles';
 import Header from '../components/Header';
 import ColumnSection from '../components/ColumnSection';
-import { useLinks } from '../hooks/useNews';
 import { Skeleton } from '../components/ui/skeleton';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from '../hooks/use-toast';
-import { Link } from '../types/news';
+import { Article } from '../types/news';
 
 const Index = () => {
   const [activeFilter, setActiveFilter] = useState('All');
@@ -14,16 +14,16 @@ const Index = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   
-  const { data: linksData = [], isLoading, error, refetch } = useLinks();
+  const { data: articlesData = [], isLoading, error, refetch } = useArticles();
 
-  console.log('Debug - Links data:', linksData.length, 'items loaded');
-  console.log('Debug - First few items:', linksData.slice(0, 2));
+  console.log('Debug - Articles data:', articlesData.length, 'items loaded');
+  console.log('Debug - First few items:', articlesData.slice(0, 2));
 
   // Organize and filter articles by target column and province
   const organizedNews = useMemo(() => {
-    if (!linksData.length) return { news: [], opinion: [], currents: [] };
+    if (!articlesData.length) return { news: [], opinion: [], currents: [] };
     
-    let filteredData = linksData;
+    let filteredData = articlesData;
     
     // Filter by province if selected
     if (selectedProvince) {
@@ -78,20 +78,20 @@ const Index = () => {
       
       const provincePatterns = getProvincePatterns(selectedProvince);
       
-      filteredData = linksData.filter(item => {
+      filteredData = articlesData.filter(item => {
         const titleText = item.title.toLowerCase();
-        const summaryText = item.summary?.toLowerCase() || '';
-        const sourceText = item.source_name.toLowerCase();
+        const summaryText = item.description?.toLowerCase() || '';
+        const domainText = item.url_domain.toLowerCase();
         
         return provincePatterns.some(pattern => 
           titleText.includes(pattern) ||
           summaryText.includes(pattern) ||
-          sourceText.includes(pattern)
+          domainText.includes(pattern)
         );
       });
     }
     
-    // Filter by target_column from news sources
+    // Filter by target_column from articles
     const news = filteredData.filter(item => 
       item.target_column === 'news'
     );
@@ -112,7 +112,7 @@ const Index = () => {
     console.log('Debug - Sample currents articles:', currents.slice(0, 3).map(a => ({ title: a.title, target_column: a.target_column })));
     
     return { news, opinion, currents };
-  }, [linksData, selectedProvince]);
+  }, [articlesData, selectedProvince]);
 
   const handleRefreshNews = async () => {
     setIsRefreshing(true);
@@ -220,7 +220,7 @@ const Index = () => {
           </div>
         )}
 
-        {!isLoading && linksData.length === 0 && (
+        {!isLoading && articlesData.length === 0 && (
           <div className="text-center py-16">
             <p className="text-muted-foreground mb-6">No stories available at the moment.</p>
             <button

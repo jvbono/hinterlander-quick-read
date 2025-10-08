@@ -2,529 +2,425 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { XMLParser } from 'https://esm.sh/fast-xml-parser@4.3.2'
 
-interface RSSItem {
-  title: string;
-  link: string;
-  description: string;
-  pubDate: string;
-  guid?: string;
-  category?: string;
-}
-
-interface NewsSource {
-  id: string;
-  name: string;
-  url: string;
-  rss_feed_url: string;
-  category: string;
-  is_active: boolean;
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 serve(async (req) => {
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  };
-
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const supabaseClient = createClient(
+    const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Generate unique run ID for this ingestion run
-    const runId = crypto.randomUUID();
-    console.log(`Starting RSS ingestion run: ${runId}`);
+    console.log('Starting RSS feed processing with 3-step pipeline...')
 
-    // Helper function to log errors to database
-    async function logError(sourceId: string, sourceName: string, errorMessage: string, httpStatus?: number) {
-      try {
-        await supabaseClient
-          .from('feed_errors')
-          .insert({
-            source_id: sourceId,
-            source_name: sourceName,
-            run_id: runId,
-            error_message: errorMessage,
-            http_status: httpStatus
-          });
-        console.log(`Logged error for source ${sourceId}: ${errorMessage}`);
-      } catch (logError) {
-        console.error('Failed to log error to database:', logError);
-      }
-    }
-
-    // Fetch active news sources
-    const { data: sources, error: sourcesError } = await supabaseClient
-      .from('news_sources')
+    // Fetch active sources
+    const { data: sources, error: sourcesError } = await supabase
+      .from('sources')
       .select('*')
       .eq('is_active', true)
 
-    if (sourcesError) {
-      throw new Error(`Failed to fetch sources: ${sourcesError.message}`)
-    }
+    if (sourcesError) throw sourcesError
+    console.log(`Found ${sources.length} active sources`)
 
-    console.log(`Processing ${sources.length} news sources in batches`)
-
-    let totalProcessed = 0;
-    let totalNew = 0;
-    let successCount = 0;
-    let errorCount = 0;
-
-    // Process sources in batches to avoid CPU timeout
-    const BATCH_SIZE = 20;
-    const allResults: Array<{ success: boolean; processed: number; newItems: number }> = [];
-
-    for (let i = 0; i < sources.length; i += BATCH_SIZE) {
-      const batch = sources.slice(i, i + BATCH_SIZE);
-      console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(sources.length / BATCH_SIZE)} (${batch.length} sources)`);
-
-      // Process this batch in parallel
-      const batchPromises = batch.map(async (source) => {
-      try {
-        console.log(`Processing RSS feed: ${source.name}`)
-        
-        // Fetch with retry logic for HTTP/2 issues
-        let response: Response | null = null;
-        let lastError: any = null;
-        const maxRetries = 2;
-        
-        for (let attempt = 0; attempt <= maxRetries; attempt++) {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000);
-            
-            response = await fetch(source.rss_feed_url, {
-              signal: controller.signal,
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'application/rss+xml, application/xml, text/xml, application/atom+xml, */*',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Accept-Encoding': 'gzip, deflate',
-                'Cache-Control': 'no-cache',
-                'Connection': 'keep-alive'
-              }
-            });
-            
-            clearTimeout(timeoutId);
-            break; // Success, exit retry loop
-            
-          } catch (fetchError: any) {
-            lastError = fetchError;
-            console.log(`Fetch attempt ${attempt + 1} failed for ${source.name}:`, fetchError.message);
-            
-            // If this isn't the last retry and it's an HTTP/2 error, try again
-            if (attempt < maxRetries && fetchError.message?.includes('http2')) {
-              console.log(`Retrying ${source.name} due to HTTP/2 error...`);
-              await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1))); // Exponential backoff
-              continue;
-            }
-            
-            // Otherwise, throw the error
-            throw fetchError;
-          }
-        }
-        
-        if (!response) {
-          throw lastError || new Error('Failed to fetch after retries');
-        }
-
-        if (!response.ok) {
-          const errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-          console.error(`Failed to fetch ${source.name}: ${errorMessage}`);
-          await logError(source.id, source.name, errorMessage, response.status);
-          return { success: false, processed: 0, newItems: 0 };
-        }
-
-        const rssText = await response.text()
-        
-        // Validate that we got some content
-        if (!rssText || rssText.trim().length === 0) {
-          const errorMessage = 'Empty response from RSS feed';
-          console.error(`${source.name}: ${errorMessage}`);
-          await logError(source.id, source.name, errorMessage);
-          return { success: false, processed: 0, newItems: 0 };
-        }
-        
-        const rssItems = parseRSS(rssText)
-        
-        // Check if we successfully parsed items
-        if (rssItems.length === 0) {
-          const errorMessage = 'No valid RSS items found in feed (possible XML parsing error)';
-          console.error(`${source.name}: ${errorMessage}`);
-          await logError(source.id, source.name, errorMessage);
-          return { success: false, processed: 0, newItems: 0 };
-        }
-        
-        console.log(`Found ${rssItems.length} items from ${source.name}`)
-
-        let sourceNewItems = 0;
-
-        // Process each RSS item with deduplication
-        for (const item of rssItems) {
-          const canonicalUrl = cleanUrl(item.link)
-          const publishedDate = parseDate(item.pubDate)
-          
-          // Check if link already exists
-          const { data: existingLink, error: linkQueryError } = await supabaseClient
-            .from('links')
-            .select('id')
-            .eq('canonical_url', canonicalUrl)
-            .maybeSingle()
-          
-          if (linkQueryError) {
-            console.error(`Error querying existing link: ${linkQueryError.message}`)
-            continue
-          }
-          
-          let linkId: string
-          
-          if (existingLink) {
-            // Update last_seen_at for existing link
-            const { error: updateError } = await supabaseClient
-              .from('links')
-              .update({ last_seen_at: new Date().toISOString() })
-              .eq('id', existingLink.id)
-            
-            if (updateError) {
-              console.error(`Error updating link: ${updateError.message}`)
-              continue
-            }
-            
-            linkId = existingLink.id
-          } else {
-            // Create new link
-            const linkData = {
-              canonical_url: canonicalUrl,
-              title: cleanText(item.title),
-              summary: cleanText(item.description),
-              published_at: publishedDate,
-              image_url: extractImageUrl(item.description)
-            }
-            
-            const { data: newLink, error: insertError } = await supabaseClient
-              .from('links')
-              .insert(linkData)
-              .select('id')
-              .single()
-            
-            if (insertError || !newLink) {
-              console.error(`Error inserting link: ${insertError?.message}`)
-              continue
-            }
-            
-            linkId = newLink.id
-            sourceNewItems++
-          }
-          
-          // Now handle the link_sources relationship
-          const category = categorizeNews(item, source)
-          
-          const { error: linkSourceError } = await supabaseClient
-            .from('link_sources')
-            .upsert({
-              link_id: linkId,
-              source_id: source.id,
-              category,
-              last_seen_at: new Date().toISOString()
-            }, {
-              onConflict: 'link_id,source_id'
-            })
-          
-          if (linkSourceError) {
-            console.error(`Error upserting link_source: ${linkSourceError.message}`)
-          }
-        }
-
-        // Update last fetched timestamp
-        await supabaseClient
-          .from('news_sources')
-          .update({ last_fetched_at: new Date().toISOString() })
-          .eq('id', source.id)
-
-        return { success: true, processed: rssItems.length, newItems: sourceNewItems };
-
-      } catch (error) {
-        let errorMessage = '';
-        const err = error as any; // Type assertion for error handling
-        
-        if (err.name === 'AbortError') {
-          errorMessage = 'Request timeout (30 seconds)';
-          console.error(`Timeout processing ${source.name}`);
-        } else if (err.message?.includes('HTTP/2')) {
-          errorMessage = `HTTP/2 protocol error: ${err.message}`;
-          console.error(`HTTP/2 error processing ${source.name}:`, error);
-        } else {
-          errorMessage = `Unexpected error: ${err.message || err.toString()}`;
-          console.error(`Error processing ${source.name}:`, error);
-        }
-        
-        await logError(source.id, source.name, errorMessage);
-        return { success: false, processed: 0, newItems: 0 };
-      }
-    });
-
-      // Wait for this batch to complete
-      const batchResults = await Promise.allSettled(batchPromises);
-      
-      // Aggregate batch results
-      batchResults.forEach((result) => {
-        if (result.status === 'fulfilled') {
-          allResults.push(result.value);
-        } else {
-          allResults.push({ success: false, processed: 0, newItems: 0 });
-          console.error('Promise rejected:', result.reason);
-        }
-      });
-
-      console.log(`Batch ${Math.floor(i / BATCH_SIZE) + 1} complete`);
-    }
+    // STEP 1: Fetch & Store Raw Items
+    const rawInsertResults = await fetchAndStoreRaw(supabase, sources)
     
-    // Aggregate all results
-    allResults.forEach((result) => {
-      const { success, processed, newItems } = result;
-      if (success) {
-        successCount++;
-        totalProcessed += processed;
-        totalNew += newItems;
-      } else {
-        errorCount++;
-      }
-    })
-
-    console.log(`RSS Processing complete: ${successCount} successful, ${errorCount} failed`)
+    // STEP 2: Process Raw Items → Articles
+    const processResults = await processRawItems(supabase)
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Processed ${totalProcessed} items, ${totalNew} new/updated`,
         sources_processed: sources.length,
-        successful: successCount,
-        failed: errorCount
+        raw_items_inserted: rawInsertResults.inserted,
+        articles_created: processResults.created,
+        articles_updated: processResults.updated,
+        timestamp: new Date().toISOString(),
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
-
   } catch (error) {
-    console.error('RSS processing error:', error)
-    const err = error as any; // Type assertion for error handling
+    console.error('Error processing RSS feeds:', error)
+    const err = error as any
     return new Response(
-      JSON.stringify({ error: err.message || 'Unknown error occurred' }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      JSON.stringify({ error: err.message || 'Unknown error' }),
+      { 
         status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     )
   }
 })
 
-function parseRSS(xmlText: string): RSSItem[] {
-  const items: RSSItem[] = []
-  
-  try {
-    const parser = new XMLParser({
-      ignoreAttributes: false,
-      attributeNamePrefix: '@_',
-      textNodeName: '#text',
-      ignoreDeclaration: true,
-      parseAttributeValue: false,
-      trimValues: true,
-      cdataPropName: '__cdata'
-    })
+// STEP 1: Fetch RSS feeds and store raw JSON
+async function fetchAndStoreRaw(supabase: any, sources: any[]) {
+  let inserted = 0
+  const parser = new XMLParser({ 
+    ignoreAttributes: false, 
+    attributeNamePrefix: '@_',
+    textNodeName: '#text',
+    ignoreDeclaration: true,
+    parseAttributeValue: false,
+    trimValues: true,
+    cdataPropName: '__cdata'
+  })
+
+  for (const source of sources) {
+    console.log(`Fetching ${source.name}...`)
     
-    const parsed = parser.parse(xmlText)
-    
-    // Handle RSS 2.0 format
-    if (parsed.rss && parsed.rss.channel && parsed.rss.channel.item) {
-      const rssItems = Array.isArray(parsed.rss.channel.item) 
-        ? parsed.rss.channel.item 
-        : [parsed.rss.channel.item]
-      
-      for (const item of rssItems) {
-        // Extract title (handle CDATA)
-        const title = item.title?.__cdata || item.title?.['#text'] || item.title || ''
-        
-        // Extract link
-        const link = item.link?.__cdata || item.link?.['#text'] || item.link || ''
-        
-        // Extract description (handle CDATA)
-        const description = item.description?.__cdata || item.description?.['#text'] || item.description || ''
-        
-        // Extract pubDate
-        const pubDate = item.pubDate?.__cdata || item.pubDate?.['#text'] || item.pubDate || ''
-        
-        // Extract guid
-        const guid = item.guid?.__cdata || item.guid?.['#text'] || item.guid || undefined
-        
-        // Extract category
-        const category = item.category?.__cdata || item.category?.['#text'] || item.category || undefined
-        
-        if (title && link) {
-          items.push({
-            title,
-            link,
-            description,
-            pubDate,
-            guid,
-            category
-          })
-        }
-      }
+    // Create fetch log
+    const { data: logData, error: logError } = await supabase
+      .from('fetch_logs')
+      .insert({ source_id: source.id, ok: false })
+      .select()
+      .single()
+
+    if (logError) {
+      console.error(`Failed to create log for ${source.name}:`, logError)
+      continue
     }
-    
-    // Handle Atom format
-    else if (parsed.feed && parsed.feed.entry) {
-      const atomEntries = Array.isArray(parsed.feed.entry) 
-        ? parsed.feed.entry 
-        : [parsed.feed.entry]
+
+    const logId = logData.id
+
+    try {
+      let response: Response | null = null
+      let lastError: any = null
+      const maxRetries = 2
       
-      for (const entry of atomEntries) {
-        // Extract title
-        const title = entry.title?.__cdata || entry.title?.['#text'] || entry.title || ''
-        
-        // Extract link (Atom uses link element with href attribute)
-        let link = ''
-        if (entry.link) {
-          if (Array.isArray(entry.link)) {
-            const htmlLink = entry.link.find((l: any) => l['@_type'] === 'text/html' || l['@_rel'] === 'alternate')
-            link = htmlLink?.['@_href'] || entry.link[0]?.['@_href'] || ''
-          } else {
-            link = entry.link?.['@_href'] || entry.link?.['#text'] || entry.link || ''
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 30000)
+
+          response = await fetch(source.rss_url, {
+            signal: controller.signal,
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              'Accept': 'application/rss+xml, application/xml, text/xml, application/atom+xml, */*',
+              'Accept-Language': 'en-US,en;q=0.9',
+              'Accept-Encoding': 'gzip, deflate',
+              'Cache-Control': 'no-cache',
+            }
+          })
+
+          clearTimeout(timeoutId)
+          break // Success
+          
+        } catch (fetchError: any) {
+          lastError = fetchError
+          console.log(`Fetch attempt ${attempt + 1} failed for ${source.name}:`, fetchError.message)
+          
+          if (attempt < maxRetries && fetchError.message?.includes('http2')) {
+            console.log(`Retrying ${source.name} due to HTTP/2 error...`)
+            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)))
+            continue
           }
-        }
-        
-        // Extract description (summary or content in Atom)
-        const description = entry.summary?.__cdata || entry.summary?.['#text'] || entry.summary || 
-                          entry.content?.__cdata || entry.content?.['#text'] || entry.content || ''
-        
-        // Extract pubDate (published or updated in Atom)
-        const pubDate = entry.published || entry.updated || ''
-        
-        // Extract guid (id in Atom)
-        const guid = entry.id || undefined
-        
-        // Extract category
-        const category = entry.category?.['@_term'] || entry.category?.['#text'] || entry.category || undefined
-        
-        if (title && link) {
-          items.push({
-            title,
-            link,
-            description,
-            pubDate,
-            guid,
-            category
-          })
+          
+          throw fetchError
         }
       }
+      
+      if (!response) {
+        throw lastError || new Error('Failed to fetch after retries')
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const xmlText = await response.text()
+      
+      if (!xmlText || xmlText.trim().length === 0) {
+        throw new Error('Empty response from RSS feed')
+      }
+      
+      const parsed = parser.parse(xmlText)
+      
+      // Handle both RSS and Atom feeds
+      let items = []
+      if (parsed.rss?.channel?.item) {
+        items = Array.isArray(parsed.rss.channel.item) ? parsed.rss.channel.item : [parsed.rss.channel.item]
+      } else if (parsed.feed?.entry) {
+        items = Array.isArray(parsed.feed.entry) ? parsed.feed.entry : [parsed.feed.entry]
+      }
+
+      if (items.length === 0) {
+        throw new Error('No valid RSS items found in feed')
+      }
+
+      console.log(`Parsed ${items.length} items from ${source.name}`)
+
+      // Insert raw items in bulk
+      const rawItems = items.map(item => ({
+        source_id: source.id,
+        item_json: item
+      }))
+
+      if (rawItems.length > 0) {
+        const { error: insertError } = await supabase
+          .from('raw_items')
+          .insert(rawItems)
+
+        if (!insertError) {
+          inserted += rawItems.length
+        } else {
+          console.error(`Error inserting raw items for ${source.name}:`, insertError)
+        }
+      }
+
+      // Update fetch log - success
+      await supabase
+        .from('fetch_logs')
+        .update({ 
+          finished_at: new Date().toISOString(),
+          ok: true,
+          http_status: response.status
+        })
+        .eq('id', logId)
+
+      // Update source last_seen_at
+      await supabase
+        .from('sources')
+        .update({ last_seen_at: new Date().toISOString() })
+        .eq('id', source.id)
+
+    } catch (error) {
+      const err = error as any
+      console.error(`Error fetching ${source.name}:`, err.message)
+      
+      // Log error
+      await supabase.from('feed_errors').insert({
+        source_id: source.id,
+        source_name: source.name,
+        error_message: err.message,
+        http_status: null
+      })
+
+      // Update fetch log - failure
+      await supabase
+        .from('fetch_logs')
+        .update({ 
+          finished_at: new Date().toISOString(),
+          ok: false,
+          error: err.message
+        })
+        .eq('id', logId)
     }
-  } catch (error) {
-    console.error('XML parsing error:', error)
   }
-  
-  return items
+
+  return { inserted }
 }
 
-function cleanText(text: any): string {
-  if (!text) return ''
-  
-  // Handle different types of input
-  let str = ''
-  if (typeof text === 'string') {
-    str = text
-  } else if (typeof text === 'object') {
-    // Try common RSS feed object properties
-    str = text.content || text._ || text['#text'] || JSON.stringify(text)
-  } else {
-    str = String(text)
+// STEP 2: Process raw items into canonical articles
+async function processRawItems(supabase: any) {
+  let created = 0
+  let updated = 0
+
+  // Get recent unprocessed raw items (last 24 hours)
+  const { data: rawItems, error: rawError } = await supabase
+    .from('raw_items')
+    .select('id, source_id, item_json, sources(id, name, default_target, tags)')
+    .gte('fetched_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+    .limit(1000)
+
+  if (rawError) throw rawError
+  console.log(`Processing ${rawItems.length} raw items...`)
+
+  // Fetch mapping rules
+  const { data: mappingRules } = await supabase
+    .from('mapping_rules')
+    .select('*')
+
+  const regionRules = mappingRules?.filter((r: any) => r.target_enum === 'region') || []
+  const categoryRules = mappingRules?.filter((r: any) => r.target_enum === 'category') || []
+
+  for (const raw of rawItems) {
+    try {
+      const item = raw.item_json
+      const source = raw.sources
+
+      // Extract title
+      const title = extractText(item.title) || extractText(item['title:']) || ''
+      
+      // Extract link
+      let link = ''
+      if (item.link) {
+        if (typeof item.link === 'string') {
+          link = item.link
+        } else if (Array.isArray(item.link)) {
+          const htmlLink = item.link.find((l: any) => l['@_type'] === 'text/html' || l['@_rel'] === 'alternate')
+          link = htmlLink?.['@_href'] || item.link[0]?.['@_href'] || ''
+        } else {
+          link = item.link?.['@_href'] || item.link?.['#text'] || ''
+        }
+      }
+      link = link || item.guid || item.id || ''
+      
+      // Extract description
+      const description = extractText(item.description) || 
+                         extractText(item.summary) || 
+                         extractText(item.content) || ''
+      
+      // Extract pubDate
+      const pubDate = parseDate(item.pubDate || item.published || item.updated || new Date().toISOString())
+      
+      // Extract author
+      const author = extractText(item.author) || extractText(item['dc:creator']) || null
+      
+      // Extract image
+      const imageUrl = extractImageUrl(item) || null
+
+      if (!title || !link) continue
+
+      // Clean URL and compute hash
+      const canonicalUrl = cleanUrl(link)
+      const urlHash = await hashString(canonicalUrl)
+
+      // Apply tagging
+      const fullText = `${title} ${description} ${link}`
+      const regions = applyMappingRules(regionRules, fullText)
+      const categories = applyMappingRules(categoryRules, fullText)
+
+      // Determine target column
+      const targetColumn = classifyArticle(item, source, link)
+
+      // Prepare article data
+      const articleData = {
+        source_id: source?.id || raw.source_id,
+        title: title.substring(0, 500),
+        canonical_url: canonicalUrl,
+        description: description ? description.substring(0, 2000) : null,
+        author,
+        image_url: imageUrl,
+        published_at: pubDate,
+        target_column: targetColumn,
+        categories,
+        regions,
+        url_hash: urlHash,
+        status: 'ready',
+        lang: 'en'
+      }
+
+      // Check if article exists
+      const { data: existing } = await supabase
+        .from('articles')
+        .select('id')
+        .eq('url_hash', urlHash)
+        .maybeSingle()
+
+      if (existing) {
+        await supabase
+          .from('articles')
+          .update(articleData)
+          .eq('id', existing.id)
+        updated++
+      } else {
+        await supabase
+          .from('articles')
+          .insert(articleData)
+        created++
+      }
+
+    } catch (error) {
+      const err = error as any
+      console.error('Error processing raw item:', err.message)
+    }
   }
-  
-  return str
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/&[^;]+;/g, '') // Remove HTML entities (simplified)
-    .trim()
-    .substring(0, 500) // Limit length
+
+  return { created, updated }
+}
+
+// Helper functions
+function extractText(obj: any): string {
+  if (!obj) return ''
+  if (typeof obj === 'string') return obj
+  return obj.__cdata || obj['#text'] || obj.content || obj._ || ''
+}
+
+function applyMappingRules(rules: any[], text: string): string[] {
+  const lowerText = text.toLowerCase()
+  const matches = new Set<string>()
+
+  for (const rule of rules) {
+    try {
+      const regex = new RegExp(rule.pattern, 'i')
+      if (regex.test(lowerText)) {
+        matches.add(rule.slug)
+      }
+    } catch (error) {
+      console.error(`Invalid regex pattern: ${rule.pattern}`)
+    }
+  }
+
+  return Array.from(matches)
+}
+
+function classifyArticle(item: any, source: any, url: string): 'news' | 'commentary' | 'currents' {
+  const urlLower = url.toLowerCase()
+  const title = extractText(item.title).toLowerCase()
+
+  // Check URL patterns for commentary/opinion
+  if (urlLower.includes('/opinion') || urlLower.includes('/commentary') || 
+      urlLower.includes('/editorial') || urlLower.includes('/column')) {
+    return 'commentary'
+  }
+
+  // Check for podcast/audio content (currents)
+  if (urlLower.includes('/podcast') || urlLower.includes('/audio') ||
+      title.includes('podcast') || item.enclosure) {
+    return 'currents'
+  }
+
+  // Default to source's default target
+  return source?.default_target || 'news'
 }
 
 function parseDate(dateString: string): string {
-  if (!dateString) return new Date().toISOString()
-  
   try {
-    const date = new Date(dateString)
-    return date.toISOString()
+    return new Date(dateString).toISOString()
   } catch {
     return new Date().toISOString()
   }
 }
 
-function categorizeNews(item: RSSItem, source: NewsSource): string {
-  const title = cleanText(item.title).toLowerCase()
-  const description = cleanText(item.description).toLowerCase()
-  const text = `${title} ${description}`
-
-  // Rural/Agriculture keywords
-  if (/\b(farm|agriculture|rural|crop|livestock|grain|beef|dairy|wheat)\b/.test(text)) {
-    return 'Rural'
-  }
-
-  // Opinion keywords
-  if (source.name.includes('Line') ||
-      /\b(opinion|editorial|commentary|analysis|column)\b/.test(text)) {
-    return 'Opinion'
-  }
-
-  // Provincial keywords (check for province names)
-  if (/\b(ontario|quebec|british columbia|alberta|manitoba|saskatchewan|nova scotia|new brunswick|newfoundland|prince edward island|toronto|montreal|vancouver|calgary|winnipeg|halifax)\b/.test(text)) {
-    return 'Provincial'
-  }
-
-  // Use source's default category
-  return source.category
-}
-
-function extractImageUrl(description: string): string | null {
-  if (!description) return null
+function extractImageUrl(item: any): string | null {
+  if (item['media:content']?.['@_url']) return item['media:content']['@_url']
+  if (item['media:thumbnail']?.['@_url']) return item['media:thumbnail']['@_url']
+  if (item.enclosure?.['@_url']) return item.enclosure['@_url']
   
-  const imgRegex = /<img[^>]+src="([^"]+)"/i
-  const match = imgRegex.exec(description)
-  return match ? match[1] : null
+  // Try to extract from description HTML
+  const desc = extractText(item.description)
+  if (desc) {
+    const imgRegex = /<img[^>]+src="([^"]+)"/i
+    const match = imgRegex.exec(desc)
+    if (match) return match[1]
+  }
+  
+  return null
 }
 
 function cleanUrl(url: string): string {
-  if (!url) return ''
-  
   try {
     const urlObj = new URL(url)
-    
-    // Remove common tracking parameters
-    const trackingParams = [
-      'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
-      'fbclid', 'gclid', 'msclkid', 'mc_cid', 'mc_eid',
-      '_ga', '_gl', 'ref', 'source', 'campaign'
-    ]
-    
-    trackingParams.forEach(param => {
-      urlObj.searchParams.delete(param)
-    })
-    
-    // Normalize the URL
-    let cleanedUrl = urlObj.toString()
-    
-    // Remove trailing slash for consistency (except for root paths)
-    if (cleanedUrl.endsWith('/') && cleanedUrl !== urlObj.origin + '/') {
-      cleanedUrl = cleanedUrl.slice(0, -1)
-    }
-    
-    return cleanedUrl.toLowerCase()
+    // Remove tracking params
+    const trackingParams = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'gclid', 'ref']
+    trackingParams.forEach(param => urlObj.searchParams.delete(param))
+    return urlObj.toString().replace(/\/$/, '')
   } catch {
-    // If URL parsing fails, return original URL cleaned up
-    return url.trim().toLowerCase()
+    return url.replace(/\/$/, '')
   }
+}
+
+async function hashString(str: string): Promise<Uint8Array> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(str)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  return new Uint8Array(hashBuffer)
 }

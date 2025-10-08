@@ -14,6 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      articles: {
+        Row: {
+          author: string | null
+          canonical_url: string
+          categories: string[] | null
+          content_hash: string | null
+          created_at: string | null
+          description: string | null
+          dropped_reason: string | null
+          fetched_at: string | null
+          id: string
+          image_url: string | null
+          lang: Database["public"]["Enums"]["article_lang"] | null
+          published_at: string | null
+          regions: string[] | null
+          source_id: string | null
+          status: Database["public"]["Enums"]["article_status"] | null
+          target_column: Database["public"]["Enums"]["article_target"] | null
+          title: string
+          topics: string[] | null
+          updated_at: string | null
+          url_domain: string | null
+          url_hash: string
+        }
+        Insert: {
+          author?: string | null
+          canonical_url: string
+          categories?: string[] | null
+          content_hash?: string | null
+          created_at?: string | null
+          description?: string | null
+          dropped_reason?: string | null
+          fetched_at?: string | null
+          id?: string
+          image_url?: string | null
+          lang?: Database["public"]["Enums"]["article_lang"] | null
+          published_at?: string | null
+          regions?: string[] | null
+          source_id?: string | null
+          status?: Database["public"]["Enums"]["article_status"] | null
+          target_column?: Database["public"]["Enums"]["article_target"] | null
+          title: string
+          topics?: string[] | null
+          updated_at?: string | null
+          url_domain?: string | null
+          url_hash: string
+        }
+        Update: {
+          author?: string | null
+          canonical_url?: string
+          categories?: string[] | null
+          content_hash?: string | null
+          created_at?: string | null
+          description?: string | null
+          dropped_reason?: string | null
+          fetched_at?: string | null
+          id?: string
+          image_url?: string | null
+          lang?: Database["public"]["Enums"]["article_lang"] | null
+          published_at?: string | null
+          regions?: string[] | null
+          source_id?: string | null
+          status?: Database["public"]["Enums"]["article_status"] | null
+          target_column?: Database["public"]["Enums"]["article_target"] | null
+          title?: string
+          topics?: string[] | null
+          updated_at?: string | null
+          url_domain?: string | null
+          url_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "articles_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      category_vocab: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          slug: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          slug: string
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          slug?: string
+        }
+        Relationships: []
+      }
       feed_errors: {
         Row: {
           created_at: string
@@ -45,207 +143,516 @@ export type Database = {
           source_name?: string | null
           timestamp?: string
         }
+        Relationships: []
+      }
+      fetch_logs: {
+        Row: {
+          error: string | null
+          finished_at: string | null
+          http_status: number | null
+          id: number
+          ok: boolean | null
+          source_id: string | null
+          started_at: string | null
+        }
+        Insert: {
+          error?: string | null
+          finished_at?: string | null
+          http_status?: number | null
+          id?: number
+          ok?: boolean | null
+          source_id?: string | null
+          started_at?: string | null
+        }
+        Update: {
+          error?: string | null
+          finished_at?: string | null
+          http_status?: number | null
+          id?: number
+          ok?: boolean | null
+          source_id?: string | null
+          started_at?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "feed_errors_source_id_fkey"
+            foreignKeyName: "fetch_logs_source_id_fkey"
             columns: ["source_id"]
             isOneToOne: false
-            referencedRelation: "news_sources"
+            referencedRelation: "sources"
             referencedColumns: ["id"]
           },
         ]
       }
-      link_sources: {
+      mapping_rules: {
         Row: {
-          category: string
-          created_at: string
-          first_seen_at: string
-          id: string
-          last_seen_at: string
-          link_id: string
-          source_id: string
-          updated_at: string
+          created_at: string | null
+          id: number
+          pattern: string
+          slug: string
+          target_enum: string | null
+          weight: number
         }
         Insert: {
-          category: string
-          created_at?: string
-          first_seen_at?: string
-          id?: string
-          last_seen_at?: string
-          link_id: string
-          source_id: string
-          updated_at?: string
+          created_at?: string | null
+          id?: number
+          pattern: string
+          slug: string
+          target_enum?: string | null
+          weight?: number
         }
         Update: {
-          category?: string
-          created_at?: string
-          first_seen_at?: string
-          id?: string
-          last_seen_at?: string
-          link_id?: string
-          source_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "link_sources_link_id_fkey"
-            columns: ["link_id"]
-            isOneToOne: false
-            referencedRelation: "links"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "link_sources_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "news_sources"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      links: {
-        Row: {
-          canonical_url: string
-          created_at: string
-          first_seen_at: string
-          id: string
-          image_url: string | null
-          last_seen_at: string
-          published_at: string
-          summary: string | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          canonical_url: string
-          created_at?: string
-          first_seen_at?: string
-          id?: string
-          image_url?: string | null
-          last_seen_at?: string
-          published_at: string
-          summary?: string | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          canonical_url?: string
-          created_at?: string
-          first_seen_at?: string
-          id?: string
-          image_url?: string | null
-          last_seen_at?: string
-          published_at?: string
-          summary?: string | null
-          title?: string
-          updated_at?: string
+          created_at?: string | null
+          id?: number
+          pattern?: string
+          slug?: string
+          target_enum?: string | null
+          weight?: number
         }
         Relationships: []
       }
-      news_items: {
+      raw_items: {
         Row: {
-          category: string
-          content: string | null
-          created_at: string
-          id: string
-          image_url: string | null
-          published_at: string
-          source: string
-          source_id: string
-          summary: string | null
-          title: string
-          updated_at: string
-          url: string
+          fetched_at: string | null
+          id: number
+          item_json: Json
+          source_id: string | null
         }
         Insert: {
-          category: string
-          content?: string | null
-          created_at?: string
-          id?: string
-          image_url?: string | null
-          published_at: string
-          source: string
-          source_id: string
-          summary?: string | null
-          title: string
-          updated_at?: string
-          url: string
+          fetched_at?: string | null
+          id?: number
+          item_json: Json
+          source_id?: string | null
         }
         Update: {
-          category?: string
-          content?: string | null
-          created_at?: string
-          id?: string
-          image_url?: string | null
-          published_at?: string
-          source?: string
-          source_id?: string
-          summary?: string | null
-          title?: string
-          updated_at?: string
-          url?: string
+          fetched_at?: string | null
+          id?: number
+          item_json?: Json
+          source_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "news_items_source_id_fkey"
+            foreignKeyName: "raw_items_source_id_fkey"
             columns: ["source_id"]
             isOneToOne: false
-            referencedRelation: "news_sources"
+            referencedRelation: "sources"
             referencedColumns: ["id"]
           },
         ]
       }
-      news_sources: {
+      region_vocab: {
         Row: {
-          category: string
-          created_at: string
-          id: string
-          is_active: boolean
-          last_fetched_at: string | null
-          name: string
-          rss_feed_url: string
-          tags: string[]
-          target_column: string | null
-          updated_at: string
-          url: string
+          created_at: string | null
+          display_name: string | null
+          slug: string
         }
         Insert: {
-          category: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          last_fetched_at?: string | null
-          name?: string
-          rss_feed_url?: string
-          tags?: string[]
-          target_column?: string | null
-          updated_at?: string
-          url?: string
+          created_at?: string | null
+          display_name?: string | null
+          slug: string
         }
         Update: {
-          category?: string
-          created_at?: string
+          created_at?: string | null
+          display_name?: string | null
+          slug?: string
+        }
+        Relationships: []
+      }
+      review_queue: {
+        Row: {
+          article_id: string
+          created_at: string | null
+          reason: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string | null
+          reason: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string | null
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_queue_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: true
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_queue_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: true
+            referencedRelation: "v_commentary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_queue_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: true
+            referencedRelation: "v_currents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_queue_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: true
+            referencedRelation: "v_news"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      source_category_defaults: {
+        Row: {
+          category_slug: string
+          source_id: string
+        }
+        Insert: {
+          category_slug: string
+          source_id: string
+        }
+        Update: {
+          category_slug?: string
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_category_defaults_category_slug_fkey"
+            columns: ["category_slug"]
+            isOneToOne: false
+            referencedRelation: "category_vocab"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "source_category_defaults_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      source_region_defaults: {
+        Row: {
+          region_slug: string
+          source_id: string
+        }
+        Insert: {
+          region_slug: string
+          source_id: string
+        }
+        Update: {
+          region_slug?: string
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_region_defaults_region_slug_fkey"
+            columns: ["region_slug"]
+            isOneToOne: false
+            referencedRelation: "region_vocab"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "source_region_defaults_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sources: {
+        Row: {
+          created_at: string | null
+          default_target: Database["public"]["Enums"]["article_target"]
+          id: string
+          is_active: boolean | null
+          last_seen_at: string | null
+          name: string
+          rss_url: string
+          site_url: string
+          tags: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_target: Database["public"]["Enums"]["article_target"]
           id?: string
-          is_active?: boolean
-          last_fetched_at?: string | null
+          is_active?: boolean | null
+          last_seen_at?: string | null
+          name: string
+          rss_url: string
+          site_url: string
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          default_target?: Database["public"]["Enums"]["article_target"]
+          id?: string
+          is_active?: boolean | null
+          last_seen_at?: string | null
           name?: string
-          rss_feed_url?: string
-          tags?: string[]
-          target_column?: string | null
-          updated_at?: string
-          url?: string
+          rss_url?: string
+          site_url?: string
+          tags?: string[] | null
+          updated_at?: string | null
         }
         Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      v_commentary: {
+        Row: {
+          author: string | null
+          canonical_url: string | null
+          categories: string[] | null
+          content_hash: string | null
+          created_at: string | null
+          description: string | null
+          dropped_reason: string | null
+          fetched_at: string | null
+          id: string | null
+          image_url: string | null
+          lang: Database["public"]["Enums"]["article_lang"] | null
+          published_at: string | null
+          regions: string[] | null
+          source_id: string | null
+          status: Database["public"]["Enums"]["article_status"] | null
+          target_column: Database["public"]["Enums"]["article_target"] | null
+          title: string | null
+          topics: string[] | null
+          updated_at: string | null
+          url_domain: string | null
+          url_hash: string | null
+        }
+        Insert: {
+          author?: string | null
+          canonical_url?: string | null
+          categories?: string[] | null
+          content_hash?: string | null
+          created_at?: string | null
+          description?: string | null
+          dropped_reason?: string | null
+          fetched_at?: string | null
+          id?: string | null
+          image_url?: string | null
+          lang?: Database["public"]["Enums"]["article_lang"] | null
+          published_at?: string | null
+          regions?: string[] | null
+          source_id?: string | null
+          status?: Database["public"]["Enums"]["article_status"] | null
+          target_column?: Database["public"]["Enums"]["article_target"] | null
+          title?: string | null
+          topics?: string[] | null
+          updated_at?: string | null
+          url_domain?: string | null
+          url_hash?: string | null
+        }
+        Update: {
+          author?: string | null
+          canonical_url?: string | null
+          categories?: string[] | null
+          content_hash?: string | null
+          created_at?: string | null
+          description?: string | null
+          dropped_reason?: string | null
+          fetched_at?: string | null
+          id?: string | null
+          image_url?: string | null
+          lang?: Database["public"]["Enums"]["article_lang"] | null
+          published_at?: string | null
+          regions?: string[] | null
+          source_id?: string | null
+          status?: Database["public"]["Enums"]["article_status"] | null
+          target_column?: Database["public"]["Enums"]["article_target"] | null
+          title?: string | null
+          topics?: string[] | null
+          updated_at?: string | null
+          url_domain?: string | null
+          url_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "articles_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_currents: {
+        Row: {
+          author: string | null
+          canonical_url: string | null
+          categories: string[] | null
+          content_hash: string | null
+          created_at: string | null
+          description: string | null
+          dropped_reason: string | null
+          fetched_at: string | null
+          id: string | null
+          image_url: string | null
+          lang: Database["public"]["Enums"]["article_lang"] | null
+          published_at: string | null
+          regions: string[] | null
+          source_id: string | null
+          status: Database["public"]["Enums"]["article_status"] | null
+          target_column: Database["public"]["Enums"]["article_target"] | null
+          title: string | null
+          topics: string[] | null
+          updated_at: string | null
+          url_domain: string | null
+          url_hash: string | null
+        }
+        Insert: {
+          author?: string | null
+          canonical_url?: string | null
+          categories?: string[] | null
+          content_hash?: string | null
+          created_at?: string | null
+          description?: string | null
+          dropped_reason?: string | null
+          fetched_at?: string | null
+          id?: string | null
+          image_url?: string | null
+          lang?: Database["public"]["Enums"]["article_lang"] | null
+          published_at?: string | null
+          regions?: string[] | null
+          source_id?: string | null
+          status?: Database["public"]["Enums"]["article_status"] | null
+          target_column?: Database["public"]["Enums"]["article_target"] | null
+          title?: string | null
+          topics?: string[] | null
+          updated_at?: string | null
+          url_domain?: string | null
+          url_hash?: string | null
+        }
+        Update: {
+          author?: string | null
+          canonical_url?: string | null
+          categories?: string[] | null
+          content_hash?: string | null
+          created_at?: string | null
+          description?: string | null
+          dropped_reason?: string | null
+          fetched_at?: string | null
+          id?: string | null
+          image_url?: string | null
+          lang?: Database["public"]["Enums"]["article_lang"] | null
+          published_at?: string | null
+          regions?: string[] | null
+          source_id?: string | null
+          status?: Database["public"]["Enums"]["article_status"] | null
+          target_column?: Database["public"]["Enums"]["article_target"] | null
+          title?: string | null
+          topics?: string[] | null
+          updated_at?: string | null
+          url_domain?: string | null
+          url_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "articles_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_news: {
+        Row: {
+          author: string | null
+          canonical_url: string | null
+          categories: string[] | null
+          content_hash: string | null
+          created_at: string | null
+          description: string | null
+          dropped_reason: string | null
+          fetched_at: string | null
+          id: string | null
+          image_url: string | null
+          lang: Database["public"]["Enums"]["article_lang"] | null
+          published_at: string | null
+          regions: string[] | null
+          source_id: string | null
+          status: Database["public"]["Enums"]["article_status"] | null
+          target_column: Database["public"]["Enums"]["article_target"] | null
+          title: string | null
+          topics: string[] | null
+          updated_at: string | null
+          url_domain: string | null
+          url_hash: string | null
+        }
+        Insert: {
+          author?: string | null
+          canonical_url?: string | null
+          categories?: string[] | null
+          content_hash?: string | null
+          created_at?: string | null
+          description?: string | null
+          dropped_reason?: string | null
+          fetched_at?: string | null
+          id?: string | null
+          image_url?: string | null
+          lang?: Database["public"]["Enums"]["article_lang"] | null
+          published_at?: string | null
+          regions?: string[] | null
+          source_id?: string | null
+          status?: Database["public"]["Enums"]["article_status"] | null
+          target_column?: Database["public"]["Enums"]["article_target"] | null
+          title?: string | null
+          topics?: string[] | null
+          updated_at?: string | null
+          url_domain?: string | null
+          url_hash?: string | null
+        }
+        Update: {
+          author?: string | null
+          canonical_url?: string | null
+          categories?: string[] | null
+          content_hash?: string | null
+          created_at?: string | null
+          description?: string | null
+          dropped_reason?: string | null
+          fetched_at?: string | null
+          id?: string | null
+          image_url?: string | null
+          lang?: Database["public"]["Enums"]["article_lang"] | null
+          published_at?: string | null
+          regions?: string[] | null
+          source_id?: string | null
+          status?: Database["public"]["Enums"]["article_status"] | null
+          target_column?: Database["public"]["Enums"]["article_target"] | null
+          title?: string | null
+          topics?: string[] | null
+          updated_at?: string | null
+          url_domain?: string | null
+          url_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "articles_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      article_lang: "en" | "fr" | "und"
+      article_status: "pending" | "ready" | "dropped"
+      article_target: "news" | "commentary" | "currents"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -372,6 +779,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      article_lang: ["en", "fr", "und"],
+      article_status: ["pending", "ready", "dropped"],
+      article_target: ["news", "commentary", "currents"],
+    },
   },
 } as const

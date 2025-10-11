@@ -5,7 +5,39 @@ interface ArticleCardProps {
   accentColor: string;
 }
 
+const decodeHtmlEntities = (text: string): string => {
+  const entities: { [key: string]: string } = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&apos;': "'",
+    '&#39;': "'",
+    '&#8217;': "'",
+    '&#8216;': "'",
+    '&#8220;': '"',
+    '&#8221;': '"',
+    '&nbsp;': ' ',
+    '&mdash;': '—',
+    '&ndash;': '–',
+    '&hellip;': '…',
+  };
+  
+  let decoded = text;
+  for (const [entity, char] of Object.entries(entities)) {
+    decoded = decoded.replace(new RegExp(entity, 'g'), char);
+  }
+  
+  // Handle numeric entities
+  decoded = decoded.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)));
+  decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  
+  return decoded;
+};
+
 const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
+  const decodedTitle = decodeHtmlEntities(article.title);
+  const decodedDescription = article.description ? decodeHtmlEntities(article.description) : '';
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -36,13 +68,13 @@ const ArticleCard = ({ article, accentColor }: ArticleCardProps) => {
           rel="noopener noreferrer"
           className="hover:underline"
         >
-          {article.title}
+          {decodedTitle}
         </a>
       </h3>
       
-      {article.description && (
+      {decodedDescription && (
         <p className="text-sm text-muted-foreground mb-3 leading-relaxed line-clamp-2">
-          {article.description}
+          {decodedDescription}
         </p>
       )}
       

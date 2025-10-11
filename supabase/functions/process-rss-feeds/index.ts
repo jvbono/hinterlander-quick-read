@@ -408,20 +408,47 @@ function applyMappingRules(rules: any[], text: string): string[] {
 function classifyArticle(item: any, source: any, url: string): 'news' | 'commentary' | 'currents' {
   const urlLower = url.toLowerCase()
   const title = extractText(item.title).toLowerCase()
+  const description = extractText(item.description || item.summary).toLowerCase()
+  const fullText = `${title} ${description}`
 
-  // Check URL patterns for commentary/opinion
-  if (urlLower.includes('/opinion') || urlLower.includes('/commentary') || 
-      urlLower.includes('/editorial') || urlLower.includes('/column')) {
+  // COMMENTARY: Opinion/analysis pieces - highest priority
+  const commentaryUrlPatterns = ['/opinion', '/commentary', '/editorial', '/column', '/blog', '/analysis', '/perspective']
+  const commentaryKeywords = ['opinion:', 'editorial:', 'column:', 'argues', 'believes', 'should', 'must not', 'why we', 'how to fix', 'perspective', 'my view', 'i think']
+  
+  if (commentaryUrlPatterns.some(pattern => urlLower.includes(pattern))) {
+    return 'commentary'
+  }
+  
+  if (commentaryKeywords.some(keyword => fullText.includes(keyword))) {
     return 'commentary'
   }
 
-  // Check for podcast/audio content (currents)
-  if (urlLower.includes('/podcast') || urlLower.includes('/audio') ||
-      title.includes('podcast') || item.enclosure) {
+  // CURRENTS: Trends, culture, ideas, ongoing conversations
+  const currentsUrlPatterns = ['/culture', '/lifestyle', '/arts', '/entertainment', '/feature', '/magazine', '/ideas', '/trend', '/story', '/profile']
+  const currentsKeywords = ['trend', 'culture', 'movement', 'conversation', 'debate', 'shift', 'changing', 'emerging', 'exploring', 'understanding', 'deep dive', 'feature:', 'profile:', 'how', 'why', 'what is']
+  
+  if (currentsUrlPatterns.some(pattern => urlLower.includes(pattern))) {
+    return 'currents'
+  }
+  
+  // Check for feature-style content (longer form, explanatory)
+  if (currentsKeywords.some(keyword => fullText.includes(keyword))) {
     return 'currents'
   }
 
-  // Default to source's default target
+  // NEWS: Factual reporting with sources, events, announcements
+  const newsUrlPatterns = ['/news', '/local', '/regional', '/national', '/politics', '/government', '/breaking', '/world', '/canada']
+  const newsKeywords = ['report', 'says', 'announce', 'confirm', 'according to', 'sources say', 'witness', 'official', 'statement', 'investigation', 'police', 'court', 'minister', 'president', 'premier']
+  
+  if (newsUrlPatterns.some(pattern => urlLower.includes(pattern))) {
+    return 'news'
+  }
+  
+  if (newsKeywords.some(keyword => fullText.includes(keyword))) {
+    return 'news'
+  }
+
+  // Default to source's default target as final fallback
   return source?.default_target || 'news'
 }
 

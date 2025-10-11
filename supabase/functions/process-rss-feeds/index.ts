@@ -247,7 +247,8 @@ async function processRawItems(supabase: any) {
       const source = raw.sources
 
       // Extract title
-      const title = extractText(item.title) || extractText(item['title:']) || ''
+      let title = extractText(item.title) || extractText(item['title:']) || ''
+      title = decodeHtmlEntities(title)
       
       // Extract link
       let link = ''
@@ -264,9 +265,10 @@ async function processRawItems(supabase: any) {
       link = link || item.guid || item.id || ''
       
       // Extract description
-      const description = extractText(item.description) || 
-                         extractText(item.summary) || 
-                         extractText(item.content) || ''
+      let description = extractText(item.description) || 
+                        extractText(item.summary) || 
+                        extractText(item.content) || ''
+      description = stripHtmlTags(description)
       
       // Extract pubDate
       const pubDate = parseDate(item.pubDate || item.published || item.updated || new Date().toISOString())
@@ -342,6 +344,47 @@ function extractText(obj: any): string {
   if (!obj) return ''
   if (typeof obj === 'string') return obj
   return obj.__cdata || obj['#text'] || obj.content || obj._ || ''
+}
+
+function decodeHtmlEntities(text: string): string {
+  const entities: { [key: string]: string } = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&apos;': "'",
+    '&#39;': "'",
+    '&#8217;': "'",
+    '&#8216;': "'",
+    '&#8220;': '"',
+    '&#8221;': '"',
+    '&nbsp;': ' ',
+    '&mdash;': '—',
+    '&ndash;': '–',
+    '&hellip;': '…',
+  }
+  
+  let decoded = text
+  for (const [entity, char] of Object.entries(entities)) {
+    decoded = decoded.replace(new RegExp(entity, 'g'), char)
+  }
+  
+  // Handle numeric entities
+  decoded = decoded.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)))
+  decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+  
+  return decoded
+}
+
+function stripHtmlTags(html: string): string {
+  if (!html) return ''
+  // Remove HTML tags
+  let text = html.replace(/<[^>]*>/g, '')
+  // Decode HTML entities
+  text = decodeHtmlEntities(text)
+  // Clean up extra whitespace
+  text = text.replace(/\s+/g, ' ').trim()
+  return text
 }
 
 function applyMappingRules(rules: any[], text: string): string[] {

@@ -6,6 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import hinterlanderLogo from '../assets/hinterlander-logo.png';
 
 interface HeaderProps {
   onRefresh: () => void;
@@ -19,34 +20,77 @@ interface HeaderProps {
 const Header = ({ onRefresh, isRefreshing, activeFilter, onFilterChange, selectedProvince, onProvinceChange }: HeaderProps) => {
   const filters = ['All', 'National'];
   
-  const provinces = [
-    'Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 
-    'Newfoundland and Labrador', 'Northwest Territories', 'Nova Scotia', 
-    'Nunavut', 'Ontario', 'Prince Edward Island', 'Quebec', 'Saskatchewan', 'Yukon'
+  const regions = [
+    'BC', 'Alberta', 'Prairies', 'Ontario', 'Quebec', 'Atlantic', 'North'
   ];
 
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3">
+    <header className="border-b border-gray-200 bg-[#F7F4EC]/95 backdrop-blur-sm sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-foreground">The Hinterlander</h1>
-            <p className="text-xs text-muted-foreground">One page, fewer solitudes.</p>
+          {/* Left: Logo */}
+          <div className="flex-shrink-0">
+            <img 
+              src={hinterlanderLogo} 
+              alt="The Hinterlander" 
+              className="h-14 md:h-16 w-auto"
+            />
+          </div>
+          
+          {/* Center: Title and Subtitle */}
+          <div className="flex-1 flex flex-col items-center text-center px-4">
+            <h1 className="text-lg md:text-xl font-bold text-gray-900 font-headline tracking-wide">The Hinterlander</h1>
+            <p className="text-xs md:text-sm text-gray-600 font-medium font-body">One page, fewer solitudes.</p>
             {selectedProvince && (
-              <p className="text-xs text-primary mt-1">Showing stories from {selectedProvince}</p>
+              <p className="text-xs text-blue-600 mt-1 font-medium font-body">Showing stories from {selectedProvince}</p>
             )}
           </div>
           
-          <div className="flex items-center gap-6">
+          {/* Right: Three-Stack Navigation Controls */}
+          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+            {/* Top stack: Refresh + Timestamp */}
             <div className="flex items-center gap-3">
+              <button
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                className="text-xs text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50 font-body"
+              >
+                {isRefreshing ? 'Refreshing...' : 'Refresh'}
+              </button>
+              <div className="text-xs text-gray-500 font-body">
+                {new Date().toLocaleTimeString('en-CA', { 
+                  hour: '2-digit', 
+                  minute: '2-digit',
+                  hour12: true
+                })}
+              </div>
+            </div>
+            
+            {/* Middle stack: Language Toggle */}
+            <div className="flex items-center gap-1">
+              <button className="text-xs text-gray-600 hover:text-gray-900 transition-colors font-medium font-body px-1">
+                EN
+              </button>
+              <span className="text-xs text-gray-400">|</span>
+              <button className="text-xs text-gray-600 hover:text-gray-900 transition-colors font-medium font-body px-1">
+                FR
+              </button>
+              <span className="text-xs text-gray-400">|</span>
+              <button className="text-xs text-gray-600 hover:text-gray-900 transition-colors font-medium font-body px-1">
+                All
+              </button>
+            </div>
+            
+            {/* Bottom stack: Regional Filters */}
+            <div className="flex items-center gap-2">
               {filters.map((filter) => (
                 <button
                   key={filter}
                   onClick={() => onFilterChange(filter)}
-                  className={`text-xs transition-colors ${
+                  className={`text-xs transition-colors font-medium font-body ${
                     activeFilter === filter
-                      ? 'text-foreground font-medium'
-                      : 'text-muted-foreground hover:text-foreground'
+                      ? 'text-gray-900'
+                      : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
                   {filter}
@@ -55,57 +99,44 @@ const Header = ({ onRefresh, isRefreshing, activeFilter, onFilterChange, selecte
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className={`text-xs transition-colors flex items-center gap-1 ${
+                  <button className={`text-xs transition-colors flex items-center gap-1 font-medium font-body ${
                     selectedProvince 
-                      ? 'text-foreground font-medium' 
-                      : 'text-muted-foreground hover:text-foreground'
+                      ? 'text-gray-900' 
+                      : 'text-gray-600 hover:text-gray-900'
                   }`}>
-                    By Province
+                    <span className="hidden sm:inline">By Region</span>
+                    <span className="sm:hidden">Region</span>
                     <ChevronDown className="h-3 w-3" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
                   align="end" 
-                  className="w-80 grid grid-cols-2 gap-0 p-2 max-h-80 overflow-y-auto"
+                  className="w-48 p-2"
                 >
-                  {provinces.map((province) => (
+                  {regions.map((region) => (
                     <DropdownMenuItem
-                      key={province}
-                      onClick={() => onProvinceChange(province)}
+                      key={region}
+                      onClick={() => onProvinceChange(region)}
                       className={`text-xs cursor-pointer ${
-                        selectedProvince === province ? 'bg-accent font-medium' : ''
+                        selectedProvince === region ? 'bg-accent font-medium' : ''
                       }`}
                     >
-                      {province}
+                      {region}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-            
-            {selectedProvince && (
-              <button
-                onClick={() => onProvinceChange(null)}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-              >
-                <X className="h-3 w-3" />
-                Clear Filter
-              </button>
-            )}
-            
-            <button
-              onClick={onRefresh}
-              disabled={isRefreshing}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-            >
-              {isRefreshing ? 'Refreshing...' : 'Refresh'}
-            </button>
-            
-            <div className="text-xs text-muted-foreground">
-              Updated {new Date().toLocaleTimeString('en-CA', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-              })}
+              
+              {/* Clear Region Filter */}
+              {selectedProvince && (
+                <button
+                  onClick={() => onProvinceChange(null)}
+                  className="text-xs text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-1 font-medium font-body"
+                >
+                  <X className="h-3 w-3" />
+                  Clear
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cheltenham:wght@400;600;700&family=Newsreader:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -100,7 +102,17 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: #F7F4EC;
+    background-image: 
+      /* Subtle paper fiber texture */
+      radial-gradient(circle at 20% 20%, rgba(139, 139, 139, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(139, 139, 139, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 40% 60%, rgba(139, 139, 139, 0.02) 0%, transparent 50%),
+      /* Fine newsprint dots */
+      radial-gradient(circle at 1px 1px, rgba(0,0,0,0.015) 1px, transparent 0);
+    background-size: 200px 200px, 200px 200px, 150px 150px, 20px 20px;
+    background-position: 0 0, 100px 100px, 50px 50px, 0 0;
   }
 }
 
@@ -110,4 +122,16 @@ All colors MUST be HSL.
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Paper texture utility class */
+.paper-texture {
+  background-color: #F7F4EC;
+  background-image: 
+    radial-gradient(circle at 20% 20%, rgba(139, 139, 139, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(139, 139, 139, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 40% 60%, rgba(139, 139, 139, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 1px 1px, rgba(0,0,0,0.015) 1px, transparent 0);
+  background-size: 200px 200px, 200px 200px, 150px 150px, 20px 20px;
+  background-position: 0 0, 100px 100px, 50px 50px, 0 0;
 }

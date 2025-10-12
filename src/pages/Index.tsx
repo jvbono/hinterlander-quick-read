@@ -136,7 +136,7 @@ const Index = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <Header 
           onRefresh={handleRefreshNews}
           isRefreshing={isRefreshing}
@@ -161,7 +161,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header 
         onRefresh={handleRefreshNews}
         isRefreshing={isRefreshing}

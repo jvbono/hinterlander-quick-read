@@ -18,6 +18,11 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				'headline': ['Cheltenham', 'Newsreader Display', 'Georgia', 'serif'],
+				'body': ['Newsreader', 'Cheltenham Text', 'Georgia', 'serif'],
+				'sans': ['system-ui', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
